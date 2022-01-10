@@ -13,11 +13,11 @@ public interface Square {
 
         void purchase(Player player);
 
-        int getRent();
+        int getRent(int data);
 
         int getMortgageCost();
 
-        int getMortgage();
-
         Player getOwner();
+
+        int mortgage();
 }

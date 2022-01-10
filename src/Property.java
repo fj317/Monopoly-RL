@@ -16,9 +16,10 @@ public class Property implements Square {
     private boolean owned;  //is property owned?
     private boolean mortgaged; //is property mortgaged
     private Player owner;
+    private final int group; // what group the property is in
 
 
-    public Property(String name, int value, int pos, int rent, int houseCost, int oneHouse, int twoHouse, int threeHouse, int fourHouse, int hotel) {
+    public Property(String name, int value, int pos, int rent, int houseCost, int oneHouse, int twoHouse, int threeHouse, int fourHouse, int hotel, int group) {
         this.name = name;
         this.value = value;
         this.pos = pos;
@@ -29,10 +30,15 @@ public class Property implements Square {
         this.threeHouseCost = threeHouse;
         this.fourHouseCost = fourHouse;
         this.hotelCost = hotel;
+        this.group = group;
     }
 
     public int getPosition() {
         return this.pos;
+    }
+
+    public int getGroup() {
+        return this.group;
     }
 
     public String getName() {
@@ -62,7 +68,6 @@ public class Property implements Square {
     public void purchase(Player playerName) {
         this.owned = true;
         this.owner = playerName;
-        // update players money
     }
 
     public void changeOwnership(Player newPlayerName) {
@@ -71,7 +76,7 @@ public class Property implements Square {
         this.buildings = 0;
     }
 
-    public int getRent() {
+    public int getRent(int data) {
         // if not owned then return 0, meaning property can be bought
         if (!owned) {
             return 0;
@@ -98,32 +103,27 @@ public class Property implements Square {
         // if havent got monopoly then cant build, error
         if (!monopoly) {
             throw new IllegalArgumentException("You must have a monopoly before buidling!");
-        }
-        this.buildings += amount;
-        if (this.buildings > 5) {
+        } else if (this.buildings + amount > 5) {
             // error as cannot have more than 5
             throw new IllegalArgumentException("Cannot build more buidlings!");
         }
-        // update player's money
+        this.buildings += amount;
     }
 
     public int getMortgageCost() {
+        return this.value / 2;
+    }
+
+    public int mortgage() {
         if (this.mortgaged) {
             // if morgaged already, return cost to unmortgage property
             this.mortgaged = false;
             // morgage for returning is morgage cost plus 10%
-            return (int) Math.round((this.value / 2) * 1.1);
-
+            return (int) Math.round((this.value / 2.0) * 1.1);
         } else {
             this.mortgaged = true;
             return this.value / 2;
         }
-
-    }
-
-    @Override
-    public int getMortgage() {
-        return 0;
     }
 
 }

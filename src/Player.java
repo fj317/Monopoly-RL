@@ -4,6 +4,7 @@ interface Player {
     int money();
     Boolean inJail();
     String playerName();
+    Iterable<Square> properties();
 
 
 }
