@@ -17,10 +17,6 @@ public class Taxes implements Square {
         return name;
     }
 
-    public int getTaxAmount() {
-        return taxAmount;
-    }
-
     public boolean isOwnable() {
         return false;
     }
@@ -34,7 +30,7 @@ public class Taxes implements Square {
     }
 
     public int getCost() {
-        return 0;
+        return taxAmount;
     }
 
     public void purchase(Player player) {

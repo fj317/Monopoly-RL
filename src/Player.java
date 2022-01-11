@@ -1,9 +1,13 @@
+import java.util.ArrayList;
+
 // interface so different player classes can be made (human, AI, etc)
 interface Player {
     int position();
     int money();
     String playerName();
-    Iterable<Square> properties();
+    ArrayList<Square> properties();
+
+    String getName();
 
     // money
 
@@ -43,6 +47,8 @@ interface Player {
     void addProperty(Square square);
 
     void sellProperty(Square square);
+
+    ArrayList<Square> getProperties();
 
 
 

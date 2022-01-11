@@ -41,6 +41,16 @@ public class Property implements Square {
         return this.group;
     }
 
+    public int getBuildings() { return this.buildings; }
+
+    public boolean getMonopolyStatus() {
+        return this.monopoly;
+    }
+
+    public int getHouseCost() {
+        return houseCost;
+    }
+
     public String getName() {
         return this.name;
     }
