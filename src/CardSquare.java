@@ -9,6 +9,10 @@ public class CardSquare implements Square {
         this.type = type;
     }
 
+    public Cards drawCard() {
+        return new Cards(this.type);
+    }
+
     public int getPosition() {
         return pos;
     }

@@ -8,6 +8,8 @@ public class Cards {
     private int travel;
     private int houseCost;
     private int hotelCost;
+    private boolean outOfJailCardDrawn;
+    private final CardType type;
 
     private int getRandom() {
         Random random = new Random();
@@ -15,6 +17,7 @@ public class Cards {
     }
 
     public Cards(CardType type) {
+        this.type = type;
         switch (type) {
             case CHANCE:
                 getChanceCard();
@@ -23,8 +26,15 @@ public class Cards {
         }
     }
 
+    public CardType getType() {
+        return this.type;
+    }
+
     private Cards getCommunityCard() {
         int number = getRandom();
+        while (outOfJailCardDrawn && number == 2) {
+            number = getRandom();
+        }
         switch (number) {
             case 0:
                 this.text = "Annuity matures collect £100";
@@ -37,6 +47,7 @@ public class Cards {
             case 2:
                 this.text = "Get out of jail free. This card may be kept until needed or sold";
                 this.action = CardAction.OUT_JAIL;
+                this.outOfJailCardDrawn = true;
             case 3:
                 this.text = "Bank error in your favour collect £200";
                 this.value = 200;
@@ -97,6 +108,9 @@ public class Cards {
 
     private Cards getChanceCard() {
         int number = getRandom();
+        while (outOfJailCardDrawn && number == 13) {
+            number = getRandom();
+        }
         switch (number) {
             case 0:
                 this.text = "Pay school fees of £150";
@@ -153,6 +167,7 @@ public class Cards {
             case 13:
                 this.text = "Get out of jail free. This card may be kept until needed or sold";
                 this.action = CardAction.OUT_JAIL;
+                this.outOfJailCardDrawn = true;
             case 14:
                 this.text = "Make general repairs on all of your houses. For each house pay £25. For each hotel pay £100";
                 this.action = CardAction.STREET_REPAIRS;
@@ -164,6 +179,10 @@ public class Cards {
                 this.action = CardAction.PLAYER_MONEY;
         }
         return this;
+    }
+
+    void returnOutOfJailCard() {
+        this.outOfJailCardDrawn = false;
     }
 
     public String getText() {
