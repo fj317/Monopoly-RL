@@ -49,6 +49,7 @@ public class Railroad implements Square {
             case 2: return 50;
             case 3: return 100;
             case 4: return 200;
+            default: return 0;
         }
     }
 

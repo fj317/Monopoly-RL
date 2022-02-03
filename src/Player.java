@@ -2,11 +2,6 @@ import java.util.ArrayList;
 
 // interface so different player classes can be made (human, AI, etc)
 interface Player {
-    int position();
-    int money();
-    String playerName();
-    ArrayList<Square> properties();
-
     String getName();
 
     // money
@@ -25,10 +20,9 @@ interface Player {
 
     Boolean inJail();
 
-    int numberGetOutOfJailCards();
+    int getNumberGetOutOfJailCards();
 
-    // return chance = 0, community = 1
-    int useGetOutOfJailCard();
+    Cards.CardType useGetOutOfJailCard();
 
     boolean stayInJail();
 
@@ -50,8 +44,6 @@ interface Player {
 
     ArrayList<Square> getProperties();
 
-
-
     // input stuff
 
     boolean inputBool(State state);
@@ -59,6 +51,8 @@ interface Player {
     int inputInt(State state);
 
     int inputDecision(State state, String[] choices);
+
+    Player inputPlayer(State state, Player notPickable);
 
 
 

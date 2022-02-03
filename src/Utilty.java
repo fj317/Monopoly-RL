@@ -44,7 +44,7 @@ public class Utilty implements Square {
         owner = player;
         numberOwned = 1;
         // go through each property and check if utility, if it is add to numberOwned
-        for (Square square: player.properties())
+        for (Square square: player.getProperties())
             if (square instanceof Utilty) {
                 numberOwned++;
             }
@@ -54,6 +54,7 @@ public class Utilty implements Square {
         switch (numberOwned) {
             case 1: return roll * 4;
             case 2: return roll * 10;
+            default: return 0;
         }
     }
 

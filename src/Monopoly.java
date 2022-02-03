@@ -1,9 +1,14 @@
+import jdk.jshell.execution.Util;
+
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.NoSuchElementException;
+import java.util.Queue;
 
 public class Monopoly {
     private final Dice dice;
-    private final Cards chance;
-    private final Cards communityChest;
+    private Cards chance;
+    private Cards communityChest;
     private State state;
 
     private Monopoly() {
@@ -12,12 +17,14 @@ public class Monopoly {
         this.communityChest = new Cards(Cards.CardType.COMMUNITY_CHEST);
         this.state = new State();
         // get players
-
+        getPlayers();
     }
 
     private void getPlayers() {
         int totalPlayers = 2;
         // add human or AI players etc
+        state.players.add(new HumanPlayer("Fred"));
+        state.players.add(new HumanPlayer("Ari"));
     }
 
     public static void main(String[] args) {
@@ -30,9 +37,11 @@ public class Monopoly {
         while (state.players.size() > 1) {
             try {
                 // get current player
-                state.currentPlayer = state.players.remove();
+                state.currentPlayer = state.players.peek();
                 // take their turn
                 turn();
+                // remove player from queue
+                state.players.remove();
                 // add player to end of queue now
                 state.players.add(state.currentPlayer);
             } catch (NoSuchElementException e) {
@@ -44,12 +53,12 @@ public class Monopoly {
         }
 
         Player winner = state.players.remove();
-        System.out.println("THE WINNER IS " + winner.playerName());
+        System.out.println("THE WINNER IS " + winner.getName());
         System.out.println("WELL DONE!!!");
     }
 
     private void turn() {
-        System.out.println("It's " + state.currentPlayer.playerName() + "'s turn.");
+        System.out.println("It's " + state.currentPlayer.getName() + "'s turn.");
         int doubleCount = 0;
         while (true) {
             // if in jail, deal with actions
@@ -66,9 +75,9 @@ public class Monopoly {
                         // use cash
                         state.currentPlayer.removeMoney(50);
                         state.currentPlayer.leaveJail();
-                    } else if (state.currentPlayer.numberGetOutOfJailCards() > 0) {
+                    } else if (state.currentPlayer.getNumberGetOutOfJailCards() > 0) {
                         // use the card
-                        if (state.currentPlayer.useGetOutOfJailCard() == 0) {
+                        if (state.currentPlayer.useGetOutOfJailCard() == Cards.CardType.CHANCE) {
                             chance.returnOutOfJailCard();
                         } else {
                             communityChest.returnOutOfJailCard();
@@ -109,9 +118,9 @@ public class Monopoly {
             }
             // go to square
             System.out.print("You rolled a " + roll.value);
-            if (roll.isDouble) System.out.print( " (double) ");
+            if (roll.isDouble) System.out.print( " (double)");
             Square[] board = state.board.getBoard();
-            System.out.println("and landed on " + board[(state.currentPlayer.getPosition() + roll.value) % 40].getName());
+            System.out.println(" and landed on " + board[(state.currentPlayer.getPosition() + roll.value) % 40].getName());
             state.currentPlayer.move(roll.value);
             // deal with square's actions
             handleSquareActions(state.currentPlayer, board[state.currentPlayer.getPosition()], roll.value);
@@ -127,7 +136,8 @@ public class Monopoly {
             System.out.println("1) Buy/sell houses");
             System.out.println("2) Mortgage/unmortgage properties");
             System.out.println("3) Trade with another player");
-            System.out.println("4) Nothing");
+            System.out.println("4) Print current state");
+            System.out.println("5) Nothing");
             state.action = State.StateActions.OTHER;
             int decision = state.currentPlayer.inputInt(state);
             switch (decision) {
@@ -141,6 +151,9 @@ public class Monopoly {
                     tradeAction(state.currentPlayer);
                     break;
                 case 4:
+                    printState();
+                    break;
+                case 5:
                     actionToDo = false;
                     break;
                 default:
@@ -169,7 +182,7 @@ public class Monopoly {
         } else if (currentSquare instanceof CardSquare) {
             drawCard(currentPlayer, (CardSquare) currentSquare);
             // if jail
-        } else if (currentSquare instanceof Jail) {
+        } else if (currentSquare instanceof Jail && ((Jail) currentSquare).getType() == Jail.JailType.GOTO_JAIL) {
             toJail(currentPlayer);
         }
     }
@@ -187,7 +200,10 @@ public class Monopoly {
         if (currentPlayer.getMoney() < propertyCost) {
             // more money needed to buy so sell assets
             System.out.println("Additional funds required to buy.");
-            // do stuff
+            int lost = additionalFunds(propertyCost, currentPlayer);
+            if (lost == 1) {
+                //lose(currentPlayer, squareOwner);
+            }
         }
         if (currentPlayer.inputBool(state)) {
             currentPlayer.removeMoney(propertyCost);
@@ -204,7 +220,107 @@ public class Monopoly {
 
     // return the winner of the auction
     private Player auction(Player currentPlayer, Square currentSquare) {
-        return null;
+        System.out.println("Auctioning off " + currentSquare.getName());
+        int currentBid = 0;
+        final int bidIncrement = 10;
+        Player winner = null;
+        state.action = State.StateActions.AUCTION;
+        int auctionNoPlayers = 0;
+        Queue<Player> auctionPlayers = state.players;
+        Player currentAuctionPlayer = currentPlayer;
+        // while still players willing to participate in auction
+        while (auctionNoPlayers != state.players.size()) {
+            System.out.println("Would " + currentAuctionPlayer.getName() + " like to place a bid? Minimum bid £" + currentBid + bidIncrement);
+            if (currentAuctionPlayer.inputBool(state)) {
+                auctionNoPlayers = 0;
+                System.out.println("Enter your bid: ");
+                int playerBid = currentAuctionPlayer.inputInt(state);
+                // if bid is more than available cash
+                if (playerBid > currentAuctionPlayer.getMoney()) {
+                    System.out.println("You do not have the required funds for that bid.");
+                    continue;
+                }
+                // if bid is less than minimum bid
+                if (playerBid < currentBid + bidIncrement) {
+                    System.out.println("Bid is below minimum bid, try again");
+                    continue;
+                }
+                currentBid = playerBid;
+                winner = currentAuctionPlayer;
+                System.out.println("Bid accepted. Current highest bid by " + currentAuctionPlayer.getName() + " for £" + currentBid);
+            } else {
+                auctionNoPlayers ++;
+            }
+            // move to next player
+            auctionPlayers.add(currentAuctionPlayer);
+            currentAuctionPlayer = auctionPlayers.remove();
+        }
+
+        if (winner == null) {
+            System.out.println("No player wins the auction.");
+        } else {
+            winner.removeMoney(currentBid);
+            winner.addProperty(currentSquare);
+            System.out.println(winner.getName() + " wins auction for £" + currentBid);
+        }
+        return winner;
+    }
+
+    private int additionalFunds(int cost, Player currentPlayer) {
+        int playerBalance = currentPlayer.getMoney();
+        System.out.println("You require £" + cost + " in additional funds. ");
+        // if player doesn't have enough money with all assets then return 0 (fail)
+        int totalAssets = getTotalAssets(currentPlayer);
+        if (totalAssets < cost) {
+
+            return 0;
+        }
+        // otherwise ...
+        while (playerBalance < cost) {
+            System.out.println("Current balance: £" + playerBalance + ". Required funds: £" + cost + ".");
+            System.out.println("Do you want to mortgage or sell houses to acquire the funds?");
+            int choice = currentPlayer.inputDecision(state, new String[]{"Mortgage", "Sell Houses"});
+            if (choice == 0) {
+                mortgage(currentPlayer);
+            } else if (choice == 1) {
+                sellHouses(currentPlayer);
+            }
+            // update players balance
+            playerBalance = currentPlayer.getMoney();
+        }
+        return 1;
+    }
+
+    private int getTotalAssets(Player currentPlayer) {
+        // get assets -> gets total player balance, total value of mortgaging every property, selling all houses/hotels
+        int totalAssets = currentPlayer.getMoney();
+        ArrayList<Square> properties = currentPlayer.getProperties();
+        for (Square sq : properties) {
+            if (!sq.isMortgaged()) {
+                // add mortgage cost of each owned square to total assets
+                totalAssets += sq.getMortgageCost();
+                // if property then add possible house costs
+                if (sq instanceof Property) {
+                    totalAssets += ((Property) sq).getBuildings() * ((Property) sq).getHouseCost() / 2;
+                }
+            }
+        }
+        return totalAssets;
+    }
+
+    private void lose(Player loserPlayer, Player winningPlayer) {
+        // add properties to winner
+        for (Square sq: loserPlayer.getProperties()) {
+            winningPlayer.addProperty(sq);
+        }
+        // add money to winner
+        winningPlayer.addMoney(loserPlayer.getMoney());
+        // add get out of jail card
+        while (loserPlayer.getNumberGetOutOfJailCards() > 0) {
+            winningPlayer.addGetOutOfJailCard(loserPlayer.useGetOutOfJailCard());
+        }
+        System.out.println(loserPlayer.getName() + " has lost!");
+
     }
 
     private void owned(Player currentPlayer, Square currentSquare, int roll) {
@@ -215,7 +331,10 @@ public class Monopoly {
         System.out.println("You have landed on " + currentSquare.getName() + " and owe " + squareOwner.getName() + " in rent.");
         if (currentPlayer.getMoney() < rent) {
             System.out.println("Additional funds required to pay rent.");
-            // do stuff
+            int lost = additionalFunds(rent, currentPlayer);
+            if (lost == 1) {
+                lose(currentPlayer, squareOwner);
+            }
         }
         currentPlayer.removeMoney(rent);
         squareOwner.addMoney(rent);
@@ -226,30 +345,50 @@ public class Monopoly {
         int taxCost = currentSquare.getCost();
         System.out.println("You have landed on " + currentSquare.getName() + " and owe " + taxCost + " in tax.");
         if (currentPlayer.getMoney() < taxCost) {
-            System.out.println("Additional funds required to pay rent.");
-            // DO STUFF
+            System.out.println("Additional funds required to pay tax.");
+            int lost = additionalFunds(taxCost, currentPlayer);
+            if (lost == 1) {
+                //lose(currentPlayer, squareOwner);
+            }
         }
         currentPlayer.removeMoney(taxCost);
     }
 
     private void drawCard(Player currentPlayer, CardSquare currentSquare) {
-        Cards card = currentSquare.drawCard();
+        Cards card = null;
+        // get the card
+        if (currentSquare.getType() == Cards.CardType.CHANCE) {
+            card = chance.getCard();
+        } else if (currentSquare.getType() == Cards.CardType.COMMUNITY_CHEST) {
+            card = communityChest.getCard();
+        }
         System.out.println(card.getText());
         switch (card.getAction()) {
             case BANK_MONEY:
                 currentPlayer.addMoney(card.getValue());
+                break;
             case PLAYER_MONEY:
                 // special case
-                currentPlayer.addMoney(card.getValue());
+                playerMoney(currentPlayer, card.getValue());
+                break;
             case MOVE:
                 currentPlayer.move(card.getTravel());
+                break;
             case MOVE_TO:
                 currentPlayer.moveTo(card.getTravelTo());
+                break;
             case STREET_REPAIRS:
-                // do stuff
+                streetRepairs(currentPlayer, card.getHouseCost(), card.getHotelCost());
+                break;
             case OUT_JAIL:
                 currentPlayer.addGetOutOfJailCard(card.getType());
-
+                break;
+        }
+        // reflect any updates to card object
+        if (currentSquare.getType() == Cards.CardType.CHANCE) {
+            chance = card;
+        } else if (currentSquare.getType() == Cards.CardType.COMMUNITY_CHEST) {
+            communityChest = card;
         }
     }
 
@@ -277,13 +416,42 @@ public class Monopoly {
     }
 
     private void tradeAction(Player currentPlayer) {
-
+        System.out.println("Who would you like to trade with?");
+        state.action = State.StateActions.TRADE;
+        Player tradingPlayer = currentPlayer.inputPlayer(state, currentPlayer);
+        // select a property to trade
+        Square propertyOne = propertySelect(currentPlayer, 0, currentPlayer);
+        if (((Property) propertyOne).getBuildings() > 0) {
+            System.out.println("This property has houses/hotels built on it. Please sell them to trade it.");
+            return;
+        }
+        // select tradingPlayer property
+        Square propertyTwo = propertySelect(currentPlayer, 0, tradingPlayer);
+        if (((Property) propertyTwo).getBuildings() > 0) {
+            System.out.println("This property has houses/hotels built on it and is untradable at the current moment.");
+            return;
+        }
+        System.out.println("You are attempting to trade " + propertyOne.getName() + " for " + propertyTwo.getName() + ". Do you agree with this trade?");
+        System.out.println(currentPlayer.getName() + " agree?");
+        boolean inputOne = currentPlayer.inputBool(state);
+        System.out.println(tradingPlayer.getName() + " agree?");
+        boolean inputTwo = tradingPlayer.inputBool(state);
+        // if both agree
+        if (inputOne && inputTwo) {
+            // perform deal
+            propertyOne.purchase(tradingPlayer);
+            currentPlayer.sellProperty(propertyOne);
+            tradingPlayer.addProperty(propertyOne);
+            propertyTwo.purchase(currentPlayer);
+            tradingPlayer.sellProperty(propertyTwo);
+            currentPlayer.addProperty(propertyTwo);
+        }
     }
 
     private void buyHouses(Player currentPlayer) {
         do {
             System.out.println("Which property would you like to buy houses on?");
-            Property property = (Property) propertySelect(currentPlayer, 3);
+            Property property = (Property) propertySelect(currentPlayer, 3, currentPlayer);
             if (property.getBuildings() == 5 || !property.getMonopolyStatus()) {
                 System.out.println("You cannot buy houses on " + property.getName());
                 System.out.println("Would you like to buy additional houses?");
@@ -306,10 +474,9 @@ public class Monopoly {
     private void sellHouses(Player currentPlayer) {
         do {
             System.out.println("Which property would you like to sell houses on?");
-            Property property = (Property) propertySelect(currentPlayer, 3);
+            Property property = (Property) propertySelect(currentPlayer, 3, currentPlayer);
             if (property.getBuildings() == 0) {
                 System.out.println("You cannot sell houses on " + property.getName());
-                System.out.println("Would you like to sell additional houses?");
                 continue;
             }
             // deal with evenly selling houses
@@ -325,7 +492,7 @@ public class Monopoly {
         do {
             System.out.println("Which property would you like to mortgage?");
             System.out.println("You own the following unmortgaged properties: ");
-            Square squareToMortgage = propertySelect(currentPlayer, 1);
+            Square squareToMortgage = propertySelect(currentPlayer, 1, currentPlayer);
             currentPlayer.addMoney(squareToMortgage.mortgage());
             System.out.println("Would you like to mortgage additional properties?");
         } while (currentPlayer.inputBool(state));
@@ -335,27 +502,96 @@ public class Monopoly {
         do {
             System.out.println("Which property would you like to unmortgage?");
             System.out.println("You own the following mortgaged properties: ");
-            Square squareToUnmortgage = propertySelect(currentPlayer, 2);
+            Square squareToUnmortgage = propertySelect(currentPlayer, 2, currentPlayer);
             currentPlayer.removeMoney(squareToUnmortgage.mortgage());
             System.out.println("Would you like to unmortgage additional properties?");
         } while (currentPlayer.inputBool(state));
     }
 
-    // skipProperties: 1 - skip mortgaged, 2 - skip unmortgaged, 3 - skip utilities/stations
-    private Square propertySelect(Player currentPlayer, int skipProperties) {
+    // skipProperties: 0- skip none, 1 - skip mortgaged, 2 - skip unmortgaged, 3 - skip utilities/stations
+    private Square propertySelect(Player currentPlayer, int skipProperties, Player playerProperties) {
         int counter = 0;
-        for (Square square: currentPlayer.getProperties()) {
+        ArrayList<Square> chosenProperties = new ArrayList<Square>();
+        for (Square square: playerProperties.getProperties()) {
             if (skipProperties == 1 && square.isMortgaged()) continue;
             else if (skipProperties == 2 && !square.isMortgaged()) continue;
-            else if (skipProperties == 3 && !(square instanceof Property)) continue;
+            else if (skipProperties == 3 && (square instanceof Utilty || square instanceof Railroad)) continue;
             counter++;
             System.out.println(counter + ")  " + square.getName());
+            chosenProperties.add(square);
         }
         int input;
         do {
             input = currentPlayer.inputInt(state);
-        } while (input <= counter && input > 0);
-        return currentPlayer.getProperties().get(input - 1);
+        } while (input >= counter && input < 0);
+        return chosenProperties.get(input - 1);
+    }
+
+    private void streetRepairs(Player currentPlayer, int houseCost, int hotelCost) {
+        int totalHouses = 0;
+        int totalHotels = 0;
+        int sqBuildings;
+        // for each property, count number of houses/hotels
+        for (Square sq : currentPlayer.getProperties()) {
+            if (sq instanceof Property) {
+                sqBuildings = ((Property) sq).getBuildings();
+                if (sqBuildings == 5) {
+                    totalHotels ++;
+                } else {
+                    totalHouses += sqBuildings;
+                }
+            }
+        }
+        int cost = (totalHotels * hotelCost) + (totalHouses * houseCost);
+        System.out.println("You own £" + cost + " for street repairs.");
+        if (currentPlayer.getMoney() < cost) {
+            // more money needed to buy so sell assets
+            System.out.println("Additional funds required to buy.");
+            int lost = additionalFunds(cost, currentPlayer);
+            if (lost == 1) {
+                //lose(currentPlayer, squareOwner);
+            }
+        }
+        currentPlayer.removeMoney(cost);
+    }
+
+    private void playerMoney(Player currentPlayer, int amount) {
+        Queue<Player> players = state.players;
+        // remove first player as this is player whos turn it is
+        players.remove();
+        for (Player person: players) {
+            if (person.getMoney() < amount) {
+                int lost = additionalFunds(amount, person);
+                if (lost == 1) {
+                    lose(person, currentPlayer);
+                }
+            }
+            person.removeMoney(amount);
+            currentPlayer.addMoney(amount);
+        }
+    }
+
+    private void printState() {
+        for (Player player : state.players) {
+            System.out.println("-----------------------------");
+            System.out.println("Name: " + player.getName());
+            System.out.println("Money: " + player.getMoney());
+            System.out.println("Current position: " + state.board.getSquare(player.getPosition()).getName());
+            System.out.print("Owned properties: ");
+            boolean firstProperty = true;
+            for (Square sq: player.getProperties()) {
+                if (firstProperty) {
+                    System.out.print(sq.getName());
+                    firstProperty = false;
+                } else {
+                    System.out.print(", " + sq.getName());
+                }
+            }
+            System.out.println();
+            if (player.inJail()) System.out.println("In jail.");
+            if (player.getNumberGetOutOfJailCards() > 0) System.out.println(player.getNumberGetOutOfJailCards() + " out of jail free cards held.");
+            System.out.println("-----------------------------");
+        }
     }
 }
 

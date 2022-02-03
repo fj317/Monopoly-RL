@@ -1,5 +1,5 @@
 public class Board {
-    private Square[] board;
+    private Square[] board = new Square[40];
 
 
     public Board() {

@@ -18,11 +18,17 @@ public class Cards {
 
     public Cards(CardType type) {
         this.type = type;
-        switch (type) {
+        outOfJailCardDrawn = false;
+    }
+
+    public Cards getCard() {
+        switch (this.type) {
             case CHANCE:
-                getChanceCard();
+                return getChanceCard();
             case COMMUNITY_CHEST:
-                getCommunityCard();
+                return getCommunityCard();
+            default:
+                return null;
         }
     }
 

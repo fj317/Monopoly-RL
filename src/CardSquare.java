@@ -17,6 +17,10 @@ public class CardSquare implements Square {
         return pos;
     }
 
+    public Cards.CardType getType() {
+        return this.type;
+    }
+
     public String getName() {
         return name;
     }
