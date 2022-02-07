@@ -156,6 +156,10 @@ public class Monopoly {
                 case 5:
                     actionToDo = false;
                     break;
+                case 6:
+                    purchase(state.currentPlayer, state.board.getSquare(1));
+                    purchase(state.currentPlayer, state.board.getSquare(3));
+                    break;
                 default:
                     System.out.println("Please enter a valid decision.");
             }
@@ -180,7 +184,7 @@ public class Monopoly {
             payTax(currentPlayer, currentSquare);
             // if chance or community chest
         } else if (currentSquare instanceof CardSquare) {
-            drawCard(currentPlayer, (CardSquare) currentSquare);
+            drawCard(currentPlayer, (CardSquare) currentSquare, roll);
             // if jail
         } else if (currentSquare instanceof Jail && ((Jail) currentSquare).getType() == Jail.JailType.GOTO_JAIL) {
             toJail(currentPlayer);
@@ -227,10 +231,10 @@ public class Monopoly {
         state.action = State.StateActions.AUCTION;
         int auctionNoPlayers = 0;
         Queue<Player> auctionPlayers = state.players;
-        Player currentAuctionPlayer = currentPlayer;
+        Player currentAuctionPlayer = auctionPlayers.remove();
         // while still players willing to participate in auction
         while (auctionNoPlayers != state.players.size()) {
-            System.out.println("Would " + currentAuctionPlayer.getName() + " like to place a bid? Minimum bid £" + currentBid + bidIncrement);
+            System.out.println("Would " + currentAuctionPlayer.getName() + " like to place a bid? Minimum bid £" + (currentBid + bidIncrement));
             if (currentAuctionPlayer.inputBool(state)) {
                 auctionNoPlayers = 0;
                 System.out.println("Enter your bid: ");
@@ -328,7 +332,7 @@ public class Monopoly {
         Player squareOwner = currentSquare.getOwner();
         // if land on own property, no cost
         if (currentPlayer == squareOwner) return;
-        System.out.println("You have landed on " + currentSquare.getName() + " and owe " + squareOwner.getName() + " in rent.");
+        System.out.println("You have landed on " + currentSquare.getName() + " and owe " + squareOwner.getName() + " £" + rent +" in rent.");
         if (currentPlayer.getMoney() < rent) {
             System.out.println("Additional funds required to pay rent.");
             int lost = additionalFunds(rent, currentPlayer);
@@ -354,7 +358,7 @@ public class Monopoly {
         currentPlayer.removeMoney(taxCost);
     }
 
-    private void drawCard(Player currentPlayer, CardSquare currentSquare) {
+    private void drawCard(Player currentPlayer, CardSquare currentSquare, int roll) {
         Cards card = null;
         // get the card
         if (currentSquare.getType() == Cards.CardType.CHANCE) {
@@ -373,9 +377,11 @@ public class Monopoly {
                 break;
             case MOVE:
                 currentPlayer.move(card.getTravel());
+                handleSquareActions(currentPlayer, currentSquare, roll);
                 break;
             case MOVE_TO:
                 currentPlayer.moveTo(card.getTravelTo());
+                handleSquareActions(currentPlayer, currentSquare, roll);
                 break;
             case STREET_REPAIRS:
                 streetRepairs(currentPlayer, card.getHouseCost(), card.getHotelCost());
@@ -421,23 +427,23 @@ public class Monopoly {
         Player tradingPlayer = currentPlayer.inputPlayer(state, currentPlayer);
         // select a property to trade
         Square propertyOne = propertySelect(currentPlayer, 0, currentPlayer);
-        if (((Property) propertyOne).getBuildings() > 0) {
-            System.out.println("This property has houses/hotels built on it. Please sell them to trade it.");
-            return;
-        }
         // select tradingPlayer property
         Square propertyTwo = propertySelect(currentPlayer, 0, tradingPlayer);
-        if (((Property) propertyTwo).getBuildings() > 0) {
-            System.out.println("This property has houses/hotels built on it and is untradable at the current moment.");
-            return;
-        }
+        try {
+            if (((Property) propertyOne).getBuildings() > 0) {
+                System.out.println("This property has houses/hotels built on it. Please sell them to trade it.");
+                return;
+            }
+            if (((Property) propertyTwo).getBuildings() > 0) {
+                System.out.println("This property has houses/hotels built on it and is untradable at the current moment.");
+                return;
+            }
+        } catch (java.lang.ClassCastException ignored){}
         System.out.println("You are attempting to trade " + propertyOne.getName() + " for " + propertyTwo.getName() + ". Do you agree with this trade?");
-        System.out.println(currentPlayer.getName() + " agree?");
-        boolean inputOne = currentPlayer.inputBool(state);
-        System.out.println(tradingPlayer.getName() + " agree?");
-        boolean inputTwo = tradingPlayer.inputBool(state);
+        System.out.print(tradingPlayer.getName() + " agree? ");
+        boolean tradingInput = tradingPlayer.inputBool(state);
         // if both agree
-        if (inputOne && inputTwo) {
+        if (tradingInput) {
             // perform deal
             propertyOne.purchase(tradingPlayer);
             currentPlayer.sellProperty(propertyOne);
@@ -445,28 +451,52 @@ public class Monopoly {
             propertyTwo.purchase(currentPlayer);
             tradingPlayer.sellProperty(propertyTwo);
             currentPlayer.addProperty(propertyTwo);
+            System.out.println("Trade successfully completed.");
+        } else {
+            System.out.println(tradingPlayer.getName() + " did not agree to the trade terms");
         }
     }
 
     private void buyHouses(Player currentPlayer) {
         do {
+
             System.out.println("Which property would you like to buy houses on?");
             Property property = (Property) propertySelect(currentPlayer, 3, currentPlayer);
-            if (property.getBuildings() == 5 || !property.getMonopolyStatus()) {
-                System.out.println("You cannot buy houses on " + property.getName());
+            Property property1 = property.getGroupPropertyA();
+            Property property2 = property.getGroupPropertyB();
+            if (property.getBuildings() == 5) {
+                System.out.println("You cannot buy more houses on " + property.getName());
                 System.out.println("Would you like to buy additional houses?");
                 continue;
-            }
-            if (currentPlayer.getMoney() < property.getHouseCost()) {
+            } else if (!property.getMonopolyStatus()) {
+                System.out.println("You do not have a monopoly on " + property.getName());
+                System.out.println("Would you like to buy additional houses?");
+                continue;
+            } else if (currentPlayer.getMoney() < property.getHouseCost()) {
                 System.out.println("You cannot afford to buy houses on " + property.getName());
                 System.out.println("Would you like to buy additional houses?");
                 continue;
+            } else if (property2 == null) {
+                if (property.getBuildings() > property1.getBuildings()) {
+                    System.out.println("You cannot build houses on this property as houses must be built evenly across a group's properties.");
+                    System.out.println("Would you like to buy additional houses?");
+                    continue;
+                }
+            } else {
+                if (property.getBuildings() > property1.getBuildings() && property.getBuildings() > property2.getBuildings()) {
+                    System.out.println("You cannot build houses on this property as houses must be built evenly across a group's properties.");
+                    System.out.println("Would you like to buy additional houses?");
+                    continue;
+                }
             }
-            // deal with evenly buying houses
-
-            property.buildBuilding(1);
-            currentPlayer.removeMoney(property.getHouseCost());
-            System.out.println("You now own " + property.getBuildings() + " houses on " + property.getName());
+            System.out.println("A house/hotel on " + property.getName() + " will cost £" + property.getHouseCost() + ". Are you sure you want to buy a house/hotel?");
+            if (currentPlayer.inputBool(state)) {
+                property.buildBuilding(1);
+                currentPlayer.removeMoney(property.getHouseCost());
+                System.out.println("You now own " + property.getBuildings() + " houses on " + property.getName());
+            } else {
+                System.out.println("House buying action cancelled.");
+            }
             System.out.println("Would you like to buy additional houses?");
         } while (currentPlayer.inputBool(state));
     }
@@ -475,35 +505,84 @@ public class Monopoly {
         do {
             System.out.println("Which property would you like to sell houses on?");
             Property property = (Property) propertySelect(currentPlayer, 3, currentPlayer);
+            Property property1 = property.getGroupPropertyA();
+            Property property2 = property.getGroupPropertyB();
             if (property.getBuildings() == 0) {
-                System.out.println("You cannot sell houses on " + property.getName());
+                System.out.println("You do not have any houses to sell on" + property.getName());
                 continue;
+            } else if (property2 == null) {
+                if (property.getBuildings() < property1.getBuildings()) {
+                    System.out.println("You cannot sell houses on this property as houses must be sold evenly across a group's properties.");
+                    System.out.println("Would you like to sell additional houses?");
+                    continue;
+                }
+            } else {
+                if (property.getBuildings() < property1.getBuildings() && property.getBuildings() < property2.getBuildings()) {
+                    System.out.println("You cannot sell houses on this property as houses must be sold evenly across a group's properties.");
+                    System.out.println("Would you like to sell additional houses?");
+                    continue;
+                }
             }
-            // deal with evenly selling houses
-
-            property.buildBuilding(-1);
-            currentPlayer.addMoney(property.getHouseCost() / 2);
-            System.out.println("You now own " + property.getBuildings() + " houses on " + property.getName());
+            System.out.println("Selling a house/hotel on " + property.getName() + " will net £" + (property.getHouseCost() / 2) + ". Are you sure you want to sell a house/hotel?");
+            if (currentPlayer.inputBool(state)) {
+                property.buildBuilding(-1);
+                currentPlayer.addMoney(property.getHouseCost() / 2);
+                System.out.println("You now own " + property.getBuildings() + " houses on " + property.getName());
+            } else {
+                System.out.println("House selling action cancelled.");
+            }
             System.out.println("Would you like to sell additional houses?");
         } while (currentPlayer.inputBool(state));
     }
 
     private void mortgage(Player currentPlayer) {
         do {
+            boolean unmortgagedProperty = false;
+            for (Square sq: currentPlayer.getProperties()) {
+                if (!sq.isMortgaged()) {
+                    unmortgagedProperty = true;
+                }
+            }
+            if (!unmortgagedProperty) {
+                System.out.println("You do not have any unmortgaged properties.");
+                return;
+            }
             System.out.println("Which property would you like to mortgage?");
             System.out.println("You own the following unmortgaged properties: ");
             Square squareToMortgage = propertySelect(currentPlayer, 1, currentPlayer);
-            currentPlayer.addMoney(squareToMortgage.mortgage());
+            System.out.println("Mortgaging " + squareToMortgage.getName() + " will net £" + (squareToMortgage.getCost() / 2) + ". Are you sure you want to mortgage the property?");
+            if (currentPlayer.inputBool(state)) {
+                currentPlayer.addMoney(squareToMortgage.mortgage());
+                System.out.println(squareToMortgage.getName() + " has been mortgaged!");
+            } else {
+                System.out.println("Mortgage action cancelled.");
+            }
             System.out.println("Would you like to mortgage additional properties?");
         } while (currentPlayer.inputBool(state));
     }
 
     private void unmortgage(Player currentPlayer) {
         do {
+            boolean mortgagedProperty = false;
+            for (Square sq: currentPlayer.getProperties()) {
+                if (sq.isMortgaged()) {
+                    mortgagedProperty = true;
+                }
+            }
+            if (!mortgagedProperty) {
+                System.out.println("You do not have any mortgaged properties.");
+                return;
+            }
             System.out.println("Which property would you like to unmortgage?");
             System.out.println("You own the following mortgaged properties: ");
             Square squareToUnmortgage = propertySelect(currentPlayer, 2, currentPlayer);
-            currentPlayer.removeMoney(squareToUnmortgage.mortgage());
+            System.out.println("Unmortgaging " + squareToUnmortgage.getName() + " will cost £" + (int) Math.round((squareToUnmortgage.getCost() / 2.0) * 1.1) + ". Are you sure you want to unmortgage the property?");
+            if (currentPlayer.inputBool(state)) {
+                currentPlayer.removeMoney(squareToUnmortgage.mortgage());
+                System.out.println(squareToUnmortgage.getName() + " has been unmortgaged!");
+            } else {
+                System.out.println("Unmortgage action cancelled.");
+            }
             System.out.println("Would you like to unmortgage additional properties?");
         } while (currentPlayer.inputBool(state));
     }
@@ -586,7 +665,20 @@ public class Monopoly {
                 } else {
                     System.out.print(", " + sq.getName());
                 }
+                if (sq.isMortgaged()) {
+                    System.out.print(" [mortgaged]");
+                } else if (sq instanceof Property) {
+                    int buildings = ((Property) sq).getBuildings();
+                    if (buildings > 0) {
+                        if (((Property) sq).getBuildings() > 4) {
+                            System.out.print(" (hotel)");
+                        } else {
+                            System.out.print(" (" + buildings + " houses)");
+                        }
+                    }
+                }
             }
+
             System.out.println();
             if (player.inJail()) System.out.println("In jail.");
             if (player.getNumberGetOutOfJailCards() > 0) System.out.println(player.getNumberGetOutOfJailCards() + " out of jail free cards held.");

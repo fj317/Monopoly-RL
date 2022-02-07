@@ -16,10 +16,11 @@ public class Property implements Square {
     private boolean owned;  //is property owned?
     private boolean mortgaged; //is property mortgaged
     private Player owner;
-    private final int group; // what group the property is in
+    private Property groupPropertyA;
+    private Property groupPropertyB;
 
 
-    public Property(String name, int value, int pos, int rent, int houseCost, int oneHouse, int twoHouse, int threeHouse, int fourHouse, int hotel, int group) {
+    public Property(String name, int value, int pos, int rent, int houseCost, int oneHouse, int twoHouse, int threeHouse, int fourHouse, int hotel) {
         this.name = name;
         this.value = value;
         this.pos = pos;
@@ -30,15 +31,24 @@ public class Property implements Square {
         this.threeHouseCost = threeHouse;
         this.fourHouseCost = fourHouse;
         this.hotelCost = hotel;
-        this.group = group;
+        this.monopoly = false;
+    }
+
+    public void setGroup(Property groupA, Property groupB) {
+        this.groupPropertyA = groupA;
+        this.groupPropertyB = groupB;
+    }
+
+    public Property getGroupPropertyA() {
+        return this.groupPropertyA;
+    }
+
+    public Property getGroupPropertyB() {
+        return groupPropertyB;
     }
 
     public int getPosition() {
         return this.pos;
-    }
-
-    public int getGroup() {
-        return this.group;
     }
 
     public int getBuildings() { return this.buildings; }
@@ -78,12 +88,37 @@ public class Property implements Square {
     public void purchase(Player playerName) {
         this.owned = true;
         this.owner = playerName;
+        // check for monopoly
+        checkMonopoly();
     }
 
-    public void changeOwnership(Player newPlayerName) {
-        // when changing hands, update owner and reset buildings to 0 again
-        this.owner = newPlayerName;
-        this.buildings = 0;
+    private void checkMonopoly() {
+        boolean relationA = false;
+        boolean relationB = false;
+        if (groupPropertyA.getOwner() == getOwner()) {
+            relationA = true;
+        }
+        if (groupPropertyB == null || groupPropertyB.getOwner() == getOwner()) {
+            relationB = true;
+        }
+        if (relationA && relationB) {
+            this.monopoly = true;
+            // update monopolies on other properties
+            groupPropertyA.setMonopoly(true);
+            if (groupPropertyB != null) {
+                groupPropertyB.setMonopoly(true);
+            }
+        } else {
+            this.monopoly = false;
+            groupPropertyA.setMonopoly(false    );
+            if (groupPropertyB != null) {
+                groupPropertyB.setMonopoly(false);
+            }
+        }
+    }
+
+    public void setMonopoly(boolean status) {
+        this.monopoly = status;
     }
 
     public int getRent(int data) {

@@ -4,14 +4,11 @@ public class Utilty implements Square {
     private final int value = 150; // cost to buy
     private boolean mortgaged; //is property mortgaged
     private Player owner;
-    private final int group; // what group the property is in
-    private int numberOwned; // number of utilities owned by player
     private boolean owned;  //is property owned?
 
     public Utilty(int pos, String name, int group) {
         this.pos = pos;
         this.name = name;
-        this.group = group;
     }
 
 
@@ -42,15 +39,15 @@ public class Utilty implements Square {
     public void purchase(Player player) {
         owned = true;
         owner = player;
-        numberOwned = 1;
-        // go through each property and check if utility, if it is add to numberOwned
-        for (Square square: player.getProperties())
-            if (square instanceof Utilty) {
-                numberOwned++;
-            }
     }
 
     public int getRent(int roll) {
+        int numberOwned = 0;
+        // go through each property and check if utility, if it is add to numberOwned
+        for (Square square: owner.getProperties())
+            if (square instanceof Utilty) {
+                numberOwned++;
+            }
         switch (numberOwned) {
             case 1: return roll * 4;
             case 2: return roll * 10;

@@ -5,13 +5,10 @@ public class Railroad implements Square {
     private boolean owned;  //is property owned?
     private boolean mortgaged; //is property mortgaged
     private Player owner;
-    private final int group; // what group the property is in
-    private int numberOwned;
 
-    public Railroad(int pos, String name, int group) {
+    public Railroad(int pos, String name) {
         this.pos = pos;
         this.name = name;
-        this.group = group;
     }
 
     public int getPosition() {
@@ -44,7 +41,13 @@ public class Railroad implements Square {
     }
 
     public int getRent(int data) {
-        switch (this.numberOwned) {
+        int numberOwned = 0;
+        // go through each property and check if station, if it is add to numberOwned
+        for (Square square: owner.getProperties())
+            if (square instanceof Railroad) {
+                numberOwned++;
+            }
+        switch (numberOwned) {
             case 1: return 25;
             case 2: return 50;
             case 3: return 100;
