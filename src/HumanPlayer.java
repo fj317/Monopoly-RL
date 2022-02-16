@@ -4,8 +4,6 @@ import java.util.Queue;
 
 public class HumanPlayer implements Player {
     private final Input input;
-    private final int TO_JAIL = 30;
-    private final int IN_JAIL = 10;
     private final ArrayList<Square> properties;
     private final String playerName;
     private int money;
@@ -48,7 +46,7 @@ public class HumanPlayer implements Player {
 
     public void sendToJail() {
         inJail = true;
-        moveTo(40);
+        moveTo(10);
         jailTurn = 0;
     }
 
@@ -80,10 +78,7 @@ public class HumanPlayer implements Player {
 
     public boolean stayInJail() {
         jailTurn++;
-        if (jailTurn == 3) {
-            return false;
-        }
-        return true;
+        return jailTurn != 3;
     }
 
     public void addGetOutOfJailCard(Cards.CardType type) {
@@ -109,7 +104,6 @@ public class HumanPlayer implements Player {
             addMoney(200);
         }
         position = pos;
-
     }
 
     public int getPosition() {
