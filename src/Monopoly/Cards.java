@@ -85,7 +85,7 @@ public class Cards {
                 this.travelTo = 1;
                 break;
             case 8:
-                this.text = "Pay hospotal £100";
+                this.text = "Pay hospital £100";
                 this.value = -100;
                 this.action = CardAction.BANK_MONEY;
                 break;

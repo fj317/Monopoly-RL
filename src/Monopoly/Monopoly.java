@@ -27,8 +27,8 @@ public class Monopoly {
     private void getPlayers() {
         int totalPlayers = 2;
         // add human or AI players etc
-        state.players.add(new RandomPolicyPlayer("A"));
-        state.players.add(new RandomPolicyPlayer("B"));
+        state.players.add(new HumanPlayer("A"));
+        state.players.add(new HumanPlayer("B"));
     }
 
     public static void main(String[] args) {
@@ -404,11 +404,11 @@ public class Monopoly {
                 break;
             case MOVE:
                 currentPlayer.move(card.getTravel());
-                handleSquareActions(currentPlayer, currentSquare, roll);
+                handleSquareActions(currentPlayer, state.board.getSquare(currentPlayer.getPosition()), roll);
                 break;
             case MOVE_TO:
                 currentPlayer.moveTo(card.getTravelTo());
-                handleSquareActions(currentPlayer, currentSquare, roll);
+                handleSquareActions(currentPlayer, state.board.getSquare(currentPlayer.getPosition()), roll);
                 break;
             case STREET_REPAIRS:
                 streetRepairs(currentPlayer, card.getHouseCost(), card.getHotelCost());
