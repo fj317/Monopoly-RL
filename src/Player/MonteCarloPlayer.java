@@ -1,6 +1,7 @@
 package Player;
 
 import Monopoly.Cards;
+import Monopoly.Property;
 import Monopoly.Square;
 import Monopoly.State;
 
@@ -94,6 +95,9 @@ public class MonteCarloPlayer implements Player {
             position = position % boardSize;
             addMoney(200);
         }
+        if (position < 0) {
+            position += 40;
+        }
     }
 
     public void moveTo(int pos) {
@@ -118,6 +122,16 @@ public class MonteCarloPlayer implements Player {
 
     public ArrayList<Square> getProperties() {
         return properties;
+    }
+
+    public ArrayList<Property> getBuildableProperties() {
+        ArrayList<Property> buildableProperties = new ArrayList<>();
+        for (Square i : getProperties()) {
+            if (i instanceof Property) {
+                buildableProperties.add((Property) i);
+            }
+        }
+        return buildableProperties;
     }
 
     public boolean inputBool(State state) {

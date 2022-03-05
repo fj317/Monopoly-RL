@@ -1,6 +1,7 @@
 package Player;
 
 import Monopoly.Cards;
+import Monopoly.Property;
 import Monopoly.Square;
 import Monopoly.State;
 
@@ -49,6 +50,8 @@ public interface Player {
     void sellProperty(Square square);
 
     ArrayList<Square> getProperties();
+
+    ArrayList<Property> getBuildableProperties();
 
     // input stuff
 

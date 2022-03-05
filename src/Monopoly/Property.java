@@ -48,7 +48,7 @@ public class Property implements Square {
     }
 
     public Property getGroupPropertyB() {
-        return groupPropertyB;
+        return this.groupPropertyB;
     }
 
     public int getPosition() {
@@ -155,6 +155,8 @@ public class Property implements Square {
         } else if (this.buildings + amount > 5) {
             // error as cannot have more than 5
             throw new IllegalArgumentException("Cannot build more buidlings!");
+        } else if (this.buildings + amount < 0) {
+            throw new IllegalArgumentException("Cannot sell more buildings");
         }
         this.buildings += amount;
     }

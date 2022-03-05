@@ -1,6 +1,7 @@
 package Player;
 
 import Monopoly.Cards;
+import Monopoly.Property;
 import Monopoly.Square;
 import Monopoly.State;
 
@@ -16,11 +17,11 @@ public class RandomPolicyPlayer implements Player {
     private int numberGetOutOfJailCards;
     private boolean chanceGetOutOfJailCardHeld;
 
-    public RandomPolicyPlayer() {
+    public RandomPolicyPlayer(String name) {
         money = 1500;
         properties = new ArrayList<>();
         position = 0;
-        this.playerName = "Random Policy Agent";
+        this.playerName = "Random Policy Agent " + name;
         inJail = false;
         numberGetOutOfJailCards = 0;
         chanceGetOutOfJailCardHeld = false;
@@ -93,6 +94,10 @@ public class RandomPolicyPlayer implements Player {
         if (position >= boardSize) {
             position = position % boardSize;
             addMoney(200);
+            System.out.println("You've passed GO, collect £200!");
+        }
+        if (position < 0) {
+            position += 40;
         }
     }
 
@@ -100,6 +105,7 @@ public class RandomPolicyPlayer implements Player {
         // check if pass GO on way
         if (pos < position) {
             addMoney(200);
+            System.out.println("You've passed GO, collect £200!");
         }
         position = pos;
     }
@@ -118,6 +124,16 @@ public class RandomPolicyPlayer implements Player {
 
     public ArrayList<Square> getProperties() {
         return properties;
+    }
+
+    public ArrayList<Property> getBuildableProperties() {
+        ArrayList<Property> buildableProperties = new ArrayList<>();
+        for (Square i : getProperties()) {
+            if (i instanceof Property) {
+                buildableProperties.add((Property) i);
+            }
+        }
+        return buildableProperties;
     }
 
     // use cash/card to get out of jail, buy property (or auction it), bidding in auction, buying/selling houses, mortgaging/unmortgating houses, agreeing to trade
@@ -154,22 +170,26 @@ public class RandomPolicyPlayer implements Player {
         int decision = 0;
         switch (state.action) {
             case OTHER:
-                // selecting initial action, options: 1-3
-                do {
-                    decision = rand.nextInt(5) + 1;
-                } while (decision == 4);
-                System.out.println(decision);
+                // selecting initial action, options: 1-4
+                decision = rand.nextInt(4) + 1;
+                System.out.println("Other - Decision value is: " + decision);
                 return decision;
             case AUCTION:
                 // bid some random amount more than the minimum
+                System.out.print("Bounds: " + (money - state.value) + ". Money: " + money);
+                // if bounds are 0, then cant use random gen
+                if (money - state.value == 0) {
+                    return state.value;
+                }
                 decision = rand.nextInt(money - state.value) + state.value;
-                System.out.println(decision);
+                System.out.println("Auction - Decision value is: " + decision);
                 return decision;
             default:
                 // selecting property
                 // value gives max range
+                System.out.print("State value: " + state.value);
                 decision = rand.nextInt(state.value) + 1;
-                System.out.println(decision);
+                System.out.println("Default - Decision value is: " + decision);
                 return decision;
         }
     }
@@ -180,7 +200,7 @@ public class RandomPolicyPlayer implements Player {
     public int inputDecision(State state, String[] choices) {
         Random rand = new Random();
         int decision = rand.nextInt(choices.length);
-        System.out.println(decision);
+        System.out.println("Chosen choice: " + choices[decision]);
         return decision;
     }
 
@@ -188,13 +208,15 @@ public class RandomPolicyPlayer implements Player {
     public Player inputPlayer(State state, Player notPickable) {
         Random rand = new Random();
         Queue<Player> inputPlayers = new LinkedList<>(state.getPlayers());
+        System.out.println(state.getPlayers().peek().getName());
         inputPlayers.remove();
+        System.out.println(inputPlayers.size() + " bound value");
         int chosenPlayer = rand.nextInt(inputPlayers.size());
         for (int i = 0; i < chosenPlayer; i++) {
             inputPlayers.remove();
         }
         Player decision = inputPlayers.remove();
-        System.out.println(decision.getName());
+        System.out.println("Chosen player: " + decision.getName());
         return decision;
     }
 }

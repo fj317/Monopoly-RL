@@ -2,6 +2,7 @@ package Player;
 
 import Monopoly.*;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class HumanPlayer implements Player {
@@ -32,6 +33,16 @@ public class HumanPlayer implements Player {
 
     public ArrayList<Square> getProperties() {
         return this.properties;
+    }
+
+    public ArrayList<Property> getBuildableProperties() {
+        ArrayList<Property> buildableProperties = new ArrayList<>();
+        for (Square i : getProperties()) {
+            if (i instanceof Property) {
+                buildableProperties.add((Property) i);
+            }
+        }
+        return buildableProperties;
     }
 
     public int getMoney() {
@@ -97,6 +108,9 @@ public class HumanPlayer implements Player {
         if (position >= boardSize) {
             position = position % boardSize;
             addMoney(200);
+        }
+        if (position < 0) {
+            position += 40;
         }
     }
 
