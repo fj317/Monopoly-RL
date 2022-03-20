@@ -134,19 +134,11 @@ public class HumanPlayer implements Player {
         properties.remove(square);
     }
 
-    public boolean inputBool(State state) {
-        return input.inputBool();
-    }
-
-    public int inputInt(State state) {
-        return input.inputInt();
-    }
-
-    public int inputDecision(State state, String[] choices) {
-        return input.inputDecision(choices);
-    }
-
-    public Player inputPlayer(State state, Player notPickable) {
-        return input.inputPlayer(state.players, notPickable);
+    public int input(State state) {
+        int answer;
+        do {
+            answer = input.inputInt();
+        } while (answer < 1 || answer > state.actionList.size());
+        return answer;
     }
 }

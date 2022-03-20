@@ -55,13 +55,7 @@ public interface Player {
 
     // input stuff
 
-    boolean inputBool(State state);
-
-    int inputInt(State state);
-
-    int inputDecision(State state, String[] choices);
-
-    Player inputPlayer(State state, Player notPickable);
+    int input(State state);
 
 
 
