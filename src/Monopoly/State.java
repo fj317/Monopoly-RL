@@ -14,6 +14,9 @@ public class State {
     public Queue<Player> players;
     public int value;
     public boolean doubles;
+    private final Dice dice;
+    private Cards chance;
+    private Cards communityChest;
 
     public List<String> actionList;
     public States currState;
@@ -24,9 +27,32 @@ public class State {
         this.currentPlayer = null;
         this.board = new Board();
         this.value = 0;
+        this.dice = new Dice();
+        this.chance = new Cards(Cards.CardType.CHANCE);
+        this.communityChest = new Cards(Cards.CardType.COMMUNITY_CHEST);
         this.actionList = new ArrayList<>();
         this.dataSquares = new ArrayList<>();
         this.currState = States.TURN;
+    }
+
+    public Cards getChance() {
+        return this.chance;
+    }
+
+    public Cards getCommunityChest() {
+        return this.communityChest;
+    }
+
+    public void setChance(Cards newChance) {
+        this.chance = newChance;
+    }
+
+    public void setCommunityChest(Cards newCommunityChest) {
+        this.communityChest = newCommunityChest;
+    }
+
+    public Dice getDice() {
+        return this.dice;
     }
 
     public Queue<Player> getPlayers() {

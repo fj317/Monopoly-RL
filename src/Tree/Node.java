@@ -1,19 +1,23 @@
 package Tree;
 
-import Monopoly.MonteCarloState;
+import Monopoly.State;
 
 import java.util.List;
 import java.util.Random;
 
 public class Node {
-    private MonteCarloState data;
+    private State data;
     private Node parent;
     private List<Node> children;
+    private int reward;
+    private int visitNumber;
 
-    public Node(MonteCarloState data, Node parent, List<Node> children) {
+    public Node(State data, Node parent, List<Node> children, int newReward, int newVisitNumber) {
         this.data = data;
         this.parent = parent;
         this.children = children;
+        this.reward = newReward;
+        this.visitNumber = newVisitNumber;
     }
 
     public void addNode(Node nodeToAdd, Node parent) {
@@ -37,7 +41,7 @@ public class Node {
         return this.children;
     }
 
-    public MonteCarloState getData() {
+    public State getData() {
         return this.data;
     }
 
@@ -54,16 +58,31 @@ public class Node {
     }
 
     public boolean isTerminal() {
-        return this.data.getTerminal();
+        return this.data.getCurrState() == State.States.END;
     }
 
     public boolean isRoot() {
         return this.parent == null;
     }
 
-    public void setData(MonteCarloState newData) {
+    public void setData(State newData) {
         this.data = newData;
     }
 
+    public double getReward() {
+        return reward;
+    }
+
+    public int getVisitNumber() {
+        return visitNumber;
+    }
+
+    public void addReward(double newReward) {
+        this.reward += newReward;
+    }
+
+    public void addVisitNumber(int newVisitNumber) {
+        this.visitNumber += newVisitNumber;
+    }
 
 }

@@ -1,33 +1,31 @@
 package Monopoly;
 
-import Player.HumanPlayer;
-import Player.Player;
-import Player.RandomPolicyPlayer;
-import Tree.Node;
-
-import javax.naming.NameNotFoundException;
+import Player.*;
 import java.util.*;
 
 public class Monopoly {
-    private final Dice dice;
-    private Cards chance;
-    private Cards communityChest;
     private State state;
     private int turnNumber;
 
 
     private Monopoly() {
-        this.dice = new Dice();
-        this.chance = new Cards(Cards.CardType.CHANCE);
-        this.communityChest = new Cards(Cards.CardType.COMMUNITY_CHEST);
         this.state = new State();
         turnNumber = 0;
         // get players
         getPlayers();
     }
 
+    public Monopoly(State state) {
+        this.state = state;
+        turnNumber = 0;
+    }
+
+    public State getState() {
+        return this.state;
+    }
+
+
     private void getPlayers() {
-        int totalPlayers = 2;
         // add human or AI players etc
         state.players.add(new RandomPolicyPlayer("Freddie"));
         state.players.add(new RandomPolicyPlayer("Random"));
@@ -48,6 +46,7 @@ public class Monopoly {
         Player winner = state.currentPlayer;
         System.out.println("THE WINNER IS " + winner.getName());
         System.out.println("WELL DONE!!!");
+        System.out.println("Total turns: " + turnNumber);
     }
 
     // auction code
@@ -119,7 +118,7 @@ public class Monopoly {
         return winner;
     } */
 
-    private void tick() {
+    public void tick() {
         int answer;
         Square currentSquare;
         int propertyCost;
@@ -297,9 +296,9 @@ public class Monopoly {
                 if (state.currentPlayer.getNumberGetOutOfJailCards() > 0) {
                     // use the card
                     if (state.currentPlayer.useGetOutOfJailCard() == Cards.CardType.CHANCE) {
-                        chance.returnOutOfJailCard();
+                        state.getChance().returnOutOfJailCard();
                     } else {
-                        communityChest.returnOutOfJailCard();
+                        state.getCommunityChest().returnOutOfJailCard();
                     }
                     state.currentPlayer.leaveJail();
                     System.out.println("You have left jail.");
@@ -641,7 +640,7 @@ public class Monopoly {
                 break;
             case ROLL:
                 // roll the dice
-                Dice.Roll roll = dice.roll();
+                Dice.Roll roll = state.getDice().roll();
                 state.setDiceRoll(roll.value);
                 if (roll.isDouble) {
                     state.setDoubles(true);
@@ -722,9 +721,9 @@ public class Monopoly {
         Cards card = null;
         // get the card
         if (currentSquare.getType() == Cards.CardType.CHANCE) {
-            card = chance.getCard();
+            card = state.getChance().getCard();
         } else if (currentSquare.getType() == Cards.CardType.COMMUNITY_CHEST) {
-            card = communityChest.getCard();
+            card = state.getCommunityChest().getCard();
         }
         System.out.println(card.getText());
         switch (card.getAction()) {
@@ -754,9 +753,9 @@ public class Monopoly {
         }
         // reflect any updates to card object (i.e. jail card taken)
         if (currentSquare.getType() == Cards.CardType.CHANCE) {
-            chance = card;
+            state.setChance(card);
         } else if (currentSquare.getType() == Cards.CardType.COMMUNITY_CHEST) {
-            communityChest = card;
+            state.setCommunityChest(card);
         }
     }
 
