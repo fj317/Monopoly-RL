@@ -1,23 +1,27 @@
 package Monopoly;
 
 import Player.*;
+
 import java.util.*;
 
 public class Monopoly {
     private State state;
     private int turnNumber;
+    private int playerTurn;
 
 
-    private Monopoly() {
+    public Monopoly() {
         this.state = new State();
         turnNumber = 0;
+        playerTurn = 1;
         // get players
         getPlayers();
     }
 
-    public Monopoly(State state) {
-        this.state = state;
-        turnNumber = 0;
+    public static void main(String[] args) {
+        Monopoly monopoly = new Monopoly();
+        monopoly.run();
+
     }
 
     public State getState() {
@@ -27,23 +31,65 @@ public class Monopoly {
 
     private void getPlayers() {
         // add human or AI players etc
-        state.players.add(new RandomPolicyPlayer("Freddie"));
-        state.players.add(new RandomPolicyPlayer("Random"));
+        // assume that playerOne is RL player
+        state.setPlayerOne(new RandomPolicyPlayer("Freddie"));
+        state.setPlayerTwo(new RandomPolicyPlayer("Random"));
     }
 
-    public static void main(String[] args) {
-        Monopoly monopoly = new Monopoly();
-        monopoly.run();
-
+    private double getRLPosition() {
+        int position = state.getPlayerOne().getPosition();
+        return position / 40.0;
     }
+
+    private double[] getRLProperties() {
+        // goes through each square of the board
+        double[] propertyList = new double[24];
+        int pos = 0;
+
+        for (int i = 0; i < 40; i++) {
+            Square currentSquare = state.getBoard().getSquare(i);
+            if (currentSquare.getOwner() == state.getPlayerOne()) {
+                // if property
+                if (currentSquare instanceof Property) {
+                    propertyList[pos] = 1.0/6.0 + (((Property) currentSquare).getBuildings() * (1.0/6.0));
+                    pos++;
+                // if railroad
+                } else if (currentSquare instanceof Railroad) {
+                    propertyList[22] += 1.0/4.0;
+                // if utilty
+                } else if (currentSquare instanceof Utilty) {
+                    propertyList[23] += 1.0/2.0;
+
+                }
+            }
+        }
+        return propertyList;
+    }
+
+    private double[] getRLFinance() {
+        // money amount normalisation
+        double money = boundMoney(state.getPlayerOne().getMoney());
+        // property comparison measure
+        double propertyComparison = (double) state.getPlayerOne().getProperties().size() / (double)(state.getPlayerOne().getProperties().size() + state.getPlayerTwo().getProperties().size());
+        return new double[]{money, propertyComparison};
+    }
+
+    private double boundMoney(int money) {
+        double maxAmount = 10000;
+        if (money > maxAmount) {
+            return 1.0;
+        } else {
+            return money / maxAmount;
+        }
+    }
+
 
     private void run() {
         System.out.println("Welcome to Monopoly! Starting the game...");
-        state.setPlayer(state.players.remove());
         while (state.getCurrState() != State.States.END) {
             tick();
         }
-        Player winner = state.currentPlayer;
+        Player winner = getCurrentPlayer();
         System.out.println("THE WINNER IS " + winner.getName());
         System.out.println("WELL DONE!!!");
         System.out.println("Total turns: " + turnNumber);
@@ -127,7 +173,9 @@ public class Monopoly {
         Property property1;
         Property property2;
         System.out.println("Current State: " + state.getCurrState().toString());
-        Player currentPlayer = state.getCurrentPlayer();
+        Player currentPlayer = getCurrentPlayer();
+        Player opponent = getOpponent();
+
         switch (state.getCurrState()) {
             case NONE:
                 // check if doubles, if so reroll dice
@@ -167,7 +215,7 @@ public class Monopoly {
                     break;
                 }
                 // check opponent has properties
-                if (state.players.peek().getProperties().size() == 0) {
+                if (opponent.getProperties().size() == 0) {
                     System.out.println("The selected trading player does not have any properties to trade.");
                     state.setState(State.States.NONE);
                     break;
@@ -185,7 +233,7 @@ public class Monopoly {
                 break;
             case TRADE_PROPERTY_SELECT_2:
                 System.out.println("Your opponent owns the following properties: ");
-                propertyList = propertySelect(state.players.peek(), 0);
+                propertyList = propertySelect(opponent, 0);
                 state.setActionList(SquareListToStringList(propertyList));
                 answer = currentPlayer.input(state) - 1;
                 currentSquare = propertyList.get(answer);
@@ -237,22 +285,21 @@ public class Monopoly {
                         }
                     }
                 }
-                Player tradingPlayer = state.players.peek();
                 System.out.println("You are attempting to trade " + propertyOne.getName() + " for " + propertyTwo.getName() + ". Do you agree with this trade?");
-                System.out.print(tradingPlayer.getName() + " agree? ");
+                System.out.print(opponent.getName() + " agree? ");
                 state.setActionList(Arrays.asList("Yes", "No"));
                 System.out.println("Please select choice");
                 System.out.println("1) Yes");
                 System.out.println("2) No");
-                answer = tradingPlayer.input(state);
+                answer = opponent.input(state);
                 if (answer == 1) {
                     System.out.println("Trade accepted");
                     // perform deal
-                    propertyOne.purchase(tradingPlayer);
+                    propertyOne.purchase(opponent);
                     currentPlayer.sellProperty(propertyOne);
-                    tradingPlayer.addProperty(propertyOne);
+                    opponent.addProperty(propertyOne);
                     propertyTwo.purchase(currentPlayer);
-                    tradingPlayer.sellProperty(propertyTwo);
+                    opponent.sellProperty(propertyTwo);
                     currentPlayer.addProperty(propertyTwo);
                     // if both properties
                     if (propertyOne instanceof Property && propertyTwo instanceof Property) {
@@ -269,10 +316,7 @@ public class Monopoly {
                 state.setState(State.States.NONE);
                 break;
             case END_TURN:
-                // add player to end of queue now
-                state.players.add(currentPlayer);
-                // if end turn then next turn, change players
-                state.setPlayer(state.players.remove());
+                playerTurn++;
                 turnNumber++;
                 state.setState(State.States.TURN);
                 break;
@@ -293,14 +337,14 @@ public class Monopoly {
                 }
                 break;
             case JAIL_OUT_CARD:
-                if (state.currentPlayer.getNumberGetOutOfJailCards() > 0) {
+                if (currentPlayer.getNumberGetOutOfJailCards() > 0) {
                     // use the card
-                    if (state.currentPlayer.useGetOutOfJailCard() == Cards.CardType.CHANCE) {
+                    if (currentPlayer.useGetOutOfJailCard() == Cards.CardType.CHANCE) {
                         state.getChance().returnOutOfJailCard();
                     } else {
                         state.getCommunityChest().returnOutOfJailCard();
                     }
-                    state.currentPlayer.leaveJail();
+                    currentPlayer.leaveJail();
                     System.out.println("You have left jail.");
                 } else {
                     System.out.println("You don't have any Get Out of Jail cards to use!");
@@ -309,9 +353,9 @@ public class Monopoly {
                 break;
             case JAIL_OUT_CASH:
                 // use cash
-                if (state.currentPlayer.getMoney() > 50) {
-                    state.currentPlayer.removeMoney(50);
-                    state.currentPlayer.leaveJail();
+                if (currentPlayer.getMoney() > 50) {
+                    currentPlayer.removeMoney(50);
+                    currentPlayer.leaveJail();
                     System.out.println("You have left jail.");
                 } else {
                     System.out.println("Insufficient funds to leave jail.");
@@ -594,8 +638,8 @@ public class Monopoly {
                     System.out.println("Insufficient funds to pay rent. " + currentPlayer.getName() + " has lost the game!");
                     state.setState(State.States.END);
                     printState();
-                    // game ended. Winner is currentPlayer (update)
-                    state.setPlayer(state.players.remove());
+                    // game ended. Winner is opponent
+                    playerTurn++;
                     break;
                 }
                 // pay player
@@ -663,8 +707,8 @@ public class Monopoly {
                                 System.out.println("Insufficient funds to pay jail fee. " + currentPlayer.getName() + " has lost the game!");
                                 state.setState(State.States.END);
                                 printState();
-                                // game ended. Winner is currentPlayer (update)
-                                state.setPlayer(state.players.remove());
+                                // game ended. Winner is opponent
+                                playerTurn++;
                                 break;
                             }
                             currentPlayer.leaveJail();
@@ -690,6 +734,22 @@ public class Monopoly {
         }
     }
 
+    private Player getCurrentPlayer() {
+        if (playerTurn % 2 == 1) {
+            return state.getPlayerOne();
+        } else {
+            return state.getPlayerTwo();
+        }
+    }
+
+    private Player getOpponent() {
+        if (playerTurn % 2 == 1) {
+            return state.getPlayerTwo();
+        } else {
+            return state.getPlayerOne();
+        }
+    }
+
 
     private ArrayList<String> SquareListToStringList(ArrayList<Square> list) {
         ArrayList<String> newlist = new ArrayList<String>();
@@ -700,7 +760,7 @@ public class Monopoly {
     }
 
     private void payTax() {
-        Player currentPlayer = state.getCurrentPlayer();
+        Player currentPlayer = getCurrentPlayer();
         Square currentSquare = state.getBoard().getSquare(currentPlayer.getPosition());
         int taxCost = currentSquare.getCost();
         System.out.println("You have landed on " + currentSquare.getName() + " and owe " + taxCost + " in tax.");
@@ -708,15 +768,15 @@ public class Monopoly {
             System.out.println("Insufficient funds to pay tax. " + currentPlayer.getName() + " has lost the game!");
             state.setState(State.States.END);
             printState();
-            // game ended. Winner is currentPlayer (update)
-            state.setPlayer(state.players.remove());
+            // game ended. Winner is opponent
+            playerTurn++;
             return;
         }
         currentPlayer.removeMoney(taxCost);
     }
 
     private void drawCard(int roll) {
-        Player currentPlayer = state.getCurrentPlayer();
+        Player currentPlayer = getCurrentPlayer();
         CardSquare currentSquare = (CardSquare) state.getBoard().getSquare(currentPlayer.getPosition());
         Cards card = null;
         // get the card
@@ -732,7 +792,7 @@ public class Monopoly {
                 break;
             case PLAYER_MONEY:
                 // special case
-                playerMoney(currentPlayer, card.getValue());
+                playerMoney(currentPlayer, getOpponent(), card.getValue());
                 break;
             case MOVE:
                 currentPlayer.move(card.getTravel());
@@ -780,8 +840,8 @@ public class Monopoly {
             System.out.println("Insufficient funds to pay street repairs. " + currentPlayer.getName() + " has lost the game!");
             state.setState(State.States.END);
             printState();
-            // game ended. Winner is currentPlayer (update)
-            state.setPlayer(state.players.remove());
+            // game ended. Winner is opponent
+            playerTurn++;
             return;
         }
         currentPlayer.removeMoney(cost);
@@ -789,22 +849,17 @@ public class Monopoly {
     }
 
     // remove amount from each player and give to the currentPlayer
-    private void playerMoney(Player currentPlayer, int amount) {
-        Queue<Player> players = new LinkedList<>(state.getPlayers());
-        // remove first player as this is player whos turn it is
-        players.remove();
-        for (Player person: players) {
-            if (person.getMoney() < amount) {
-                System.out.println("Insufficient funds to pay street repairs. " + person.getName() + " has lost the game!");
-                state.setState(State.States.END);
-                printState();
-                // game ended. no need to change player as winner is the current player (since loser couldnt pay)
-                return;
-            }
-            person.removeMoney(amount);
-            currentPlayer.addMoney(amount);
-            state.setState(State.States.NONE);
+    private void playerMoney(Player currentPlayer, Player opponent, int amount) {
+        if (opponent.getMoney() < amount) {
+            System.out.println("Insufficient funds to pay. " + opponent.getName() + " has lost the game!");
+            state.setState(State.States.END);
+            printState();
+            // game ended. no need to change player as winner is the current player (since opponent couldnt pay)
+            return;
         }
+        opponent.removeMoney(amount);
+        currentPlayer.addMoney(amount);
+        state.setState(State.States.NONE);
     }
 
     // skipProperties: 0- skip none, 1 - skip mortgaged, 2 - skip unmortgaged, 3 - skip utilities/stations
@@ -834,7 +889,10 @@ public class Monopoly {
     }
 
     private void printState() {
-        for (Player player : state.getPlayers()) {
+        ArrayList<Player> players = new ArrayList<>();
+        players.add(state.getPlayerOne());
+        players.add(state.getPlayerTwo());
+        for (Player player : players) {
             System.out.println("-----------------------------");
             System.out.println("Name: " + player.getName());
             System.out.println("Money: " + player.getMoney());

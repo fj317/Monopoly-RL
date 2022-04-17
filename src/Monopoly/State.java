@@ -3,15 +3,14 @@ package Monopoly;
 import Player.Player;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 public class State {
     public Board board;
-    public Player currentPlayer;
+    public Player playerOne;
+    public Player playerTwo;
+
     public int diceRoll;
-    public Queue<Player> players;
     public int value;
     public boolean doubles;
     private final Dice dice;
@@ -23,8 +22,6 @@ public class State {
     public ArrayList<Square> dataSquares;
 
     public State() {
-        this.players = new LinkedList<>();
-        this.currentPlayer = null;
         this.board = new Board();
         this.value = 0;
         this.dice = new Dice();
@@ -33,6 +30,8 @@ public class State {
         this.actionList = new ArrayList<>();
         this.dataSquares = new ArrayList<>();
         this.currState = States.TURN;
+        this.playerOne = null;
+        this.playerTwo = null;
     }
 
     public Cards getChance() {
@@ -55,24 +54,28 @@ public class State {
         return this.dice;
     }
 
-    public Queue<Player> getPlayers() {
-        return this.players;
-    }
-
     public States getCurrState() {
         return this.currState;
     }
 
+    public void setPlayerOne(Player playerOne) {
+        this.playerOne = playerOne;
+    }
+
+    public void setPlayerTwo(Player playerTwo) {
+        this.playerTwo = playerTwo;
+    }
+
+    public Player getPlayerOne() {
+        return this.playerOne;
+    }
+
+    public Player getPlayerTwo() {
+        return this.playerTwo;
+    }
+
     public void setState(States newState) {
         this.currState = newState;
-    }
-
-    public void setPlayer(Player newPlayer) {
-        this.currentPlayer = newPlayer;
-    }
-
-    public Player getCurrentPlayer() {
-        return this.currentPlayer;
     }
 
     public Board getBoard() {
