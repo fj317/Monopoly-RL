@@ -7,40 +7,54 @@ import java.util.*;
 public class Monopoly {
     private State state;
     private int turnNumber;
-    private int playerTurn;
 
 
     public Monopoly() {
         this.state = new State();
         turnNumber = 0;
-        playerTurn = 1;
         // get players
         getPlayers();
     }
 
-    public static void main(String[] args) {
-        Monopoly monopoly = new Monopoly();
-        monopoly.run();
+    public Monopoly(State startingState) {
+        this.state = startingState;
+        turnNumber = 0;
+    }
 
+    public static void main(String[] args) {
+        double totalTurn = 0;
+        for (int i = 0; i < 1; i++) {
+            Monopoly monopoly = new Monopoly();
+            monopoly.run();
+            totalTurn += monopoly.getTurnNumber();
+        }
+        totalTurn = (totalTurn / 2);
+        System.out.println("TOTAL AVERAGE TURNS: " + totalTurn);
     }
 
     public State getState() {
         return this.state;
     }
 
+    public int getTurnNumber() {
+        return turnNumber;
+    }
 
     private void getPlayers() {
         // add human or AI players etc
         // assume that playerOne is RL player
         state.setPlayerOne(new RandomPolicyPlayer("Freddie"));
         state.setPlayerTwo(new RandomPolicyPlayer("Random"));
+
     }
 
+    // get position state
     private double getRLPosition() {
         int position = state.getPlayerOne().getPosition();
         return position / 40.0;
     }
 
+    // get property states
     private double[] getRLProperties() {
         // goes through each square of the board
         double[] propertyList = new double[24];
@@ -66,6 +80,7 @@ public class Monopoly {
         return propertyList;
     }
 
+    // get finance states
     private double[] getRLFinance() {
         // money amount normalisation
         double money = boundMoney(state.getPlayerOne().getMoney());
@@ -74,6 +89,7 @@ public class Monopoly {
         return new double[]{money, propertyComparison};
     }
 
+    // bound money between 0 and 1
     private double boundMoney(int money) {
         double maxAmount = 10000;
         if (money > maxAmount) {
@@ -83,86 +99,26 @@ public class Monopoly {
         }
     }
 
+    private boolean isDone() {
+        return state.getCurrState() == State.States.END;
+    }
+
+    // get state observation
+//    public StateObservation getStateObs() {
+//        return new StateObservation(getRLPosition(), getRLProperties(), getRLFinance(), getReward(), isDone());
+//    }
+
 
     private void run() {
         System.out.println("Welcome to Monopoly! Starting the game...");
         while (state.getCurrState() != State.States.END) {
             tick();
         }
-        Player winner = getCurrentPlayer();
+        Player winner = state.getCurrentPlayer();
         System.out.println("THE WINNER IS " + winner.getName());
         System.out.println("WELL DONE!!!");
         System.out.println("Total turns: " + turnNumber);
     }
-
-    // auction code
-    /*
-    // return the winner of the auction
-    private Player auction(Player currentPlayer, Square currentSquare) {
-        System.out.println("Auctioning off " + currentSquare.getName());
-        int currentBid = 0;
-        final int bidIncrement = 10;
-        int minimumBid;
-        Player winner = null;
-        state.action = State.StateActions.AUCTION;
-        Queue<Player> auctionPlayers = new LinkedList<>(state.getPlayers());
-        Player currentAuctionPlayer = auctionPlayers.remove();
-        // while still players willing to participate in auction
-        while (auctionPlayers.size() > 0) {
-            System.out.println("It is " + currentAuctionPlayer.getName() + "'s turn to bid.");
-            if (winner == currentAuctionPlayer) {
-                // if winner of auction is current auction player skip their turn
-                System.out.println(currentAuctionPlayer.getName() + " holds the highest bid currently, skipping their turn.");
-                // move to next player and continue loop
-                auctionPlayers.add(currentAuctionPlayer);
-                currentAuctionPlayer = auctionPlayers.remove();
-                continue;
-            }
-            minimumBid = currentBid + bidIncrement;
-            state.value = minimumBid;
-            if (minimumBid > currentAuctionPlayer.getMoney()) {
-                System.out.println("Insufficient funds to bid, removing player from auction.");
-                currentAuctionPlayer = auctionPlayers.remove();
-                // dont add to auction list as not enough money anyway
-                continue;
-            }
-            System.out.println("Would " + currentAuctionPlayer.getName() + " like to place a bid? Minimum bid £" + (currentBid + bidIncrement));
-            state.setActionList(Arrays.asList("Yes", "No"));
-            if (currentAuctionPlayer.inputBool(state)) {
-                System.out.println("Enter your bid: ");
-                state.setActionList(Arrays.asList(Integer.toString(minimumBid)));
-                int playerBid = currentAuctionPlayer.inputInt(state);
-                // if bid is more than available cash
-                if (playerBid > currentAuctionPlayer.getMoney()) {
-                    System.out.println("You do not have the required funds for that bid.");
-                    continue;
-                }
-                // if bid is less than minimum bid
-                if (playerBid < currentBid + bidIncrement) {
-                    System.out.println("Bid is below minimum bid, try again");
-                    continue;
-                }
-                currentBid = playerBid;
-                winner = currentAuctionPlayer;
-                System.out.println("Bid accepted. Current highest bid by " + currentAuctionPlayer.getName() + " for £" + currentBid);
-            } else {
-                if (winner != null) {
-                    break;
-                }
-            }
-            // move to next player
-            auctionPlayers.add(currentAuctionPlayer);
-            currentAuctionPlayer = auctionPlayers.remove();
-        }
-
-        if (winner == null) {
-            System.out.println("No player wins the auction.");
-        } else {
-            winner.removeMoney(currentBid);
-            System.out.println(winner.getName() + " wins auction for £" + currentBid);
-        }
-        return winner;
-    } */
 
     public void tick() {
         int answer;
@@ -173,8 +129,8 @@ public class Monopoly {
         Property property1;
         Property property2;
         System.out.println("Current State: " + state.getCurrState().toString());
-        Player currentPlayer = getCurrentPlayer();
-        Player opponent = getOpponent();
+        Player currentPlayer = state.getCurrentPlayer();
+        Player opponent = state.getOpponent();
 
         switch (state.getCurrState()) {
             case NONE:
@@ -316,7 +272,7 @@ public class Monopoly {
                 state.setState(State.States.NONE);
                 break;
             case END_TURN:
-                playerTurn++;
+                state.nextTurn();
                 turnNumber++;
                 state.setState(State.States.TURN);
                 break;
@@ -639,7 +595,7 @@ public class Monopoly {
                     state.setState(State.States.END);
                     printState();
                     // game ended. Winner is opponent
-                    playerTurn++;
+                    state.nextTurn();
                     break;
                 }
                 // pay player
@@ -708,7 +664,7 @@ public class Monopoly {
                                 state.setState(State.States.END);
                                 printState();
                                 // game ended. Winner is opponent
-                                playerTurn++;
+                                state.nextTurn();
                                 break;
                             }
                             currentPlayer.leaveJail();
@@ -734,23 +690,6 @@ public class Monopoly {
         }
     }
 
-    private Player getCurrentPlayer() {
-        if (playerTurn % 2 == 1) {
-            return state.getPlayerOne();
-        } else {
-            return state.getPlayerTwo();
-        }
-    }
-
-    private Player getOpponent() {
-        if (playerTurn % 2 == 1) {
-            return state.getPlayerTwo();
-        } else {
-            return state.getPlayerOne();
-        }
-    }
-
-
     private ArrayList<String> SquareListToStringList(ArrayList<Square> list) {
         ArrayList<String> newlist = new ArrayList<String>();
         for (Square item: list) {
@@ -760,7 +699,7 @@ public class Monopoly {
     }
 
     private void payTax() {
-        Player currentPlayer = getCurrentPlayer();
+        Player currentPlayer = state.getCurrentPlayer();
         Square currentSquare = state.getBoard().getSquare(currentPlayer.getPosition());
         int taxCost = currentSquare.getCost();
         System.out.println("You have landed on " + currentSquare.getName() + " and owe " + taxCost + " in tax.");
@@ -769,14 +708,14 @@ public class Monopoly {
             state.setState(State.States.END);
             printState();
             // game ended. Winner is opponent
-            playerTurn++;
+            state.nextTurn();
             return;
         }
         currentPlayer.removeMoney(taxCost);
     }
 
     private void drawCard(int roll) {
-        Player currentPlayer = getCurrentPlayer();
+        Player currentPlayer = state.getCurrentPlayer();
         CardSquare currentSquare = (CardSquare) state.getBoard().getSquare(currentPlayer.getPosition());
         Cards card = null;
         // get the card
@@ -792,7 +731,7 @@ public class Monopoly {
                 break;
             case PLAYER_MONEY:
                 // special case
-                playerMoney(currentPlayer, getOpponent(), card.getValue());
+                playerMoney(currentPlayer, state.getOpponent(), card.getValue());
                 break;
             case MOVE:
                 currentPlayer.move(card.getTravel());
@@ -841,7 +780,7 @@ public class Monopoly {
             state.setState(State.States.END);
             printState();
             // game ended. Winner is opponent
-            playerTurn++;
+            state.nextTurn();
             return;
         }
         currentPlayer.removeMoney(cost);

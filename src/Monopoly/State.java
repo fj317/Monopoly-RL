@@ -20,6 +20,7 @@ public class State {
     public List<String> actionList;
     public States currState;
     public ArrayList<Square> dataSquares;
+    private int playerTurn;
 
     public State() {
         this.board = new Board();
@@ -32,6 +33,33 @@ public class State {
         this.currState = States.TURN;
         this.playerOne = null;
         this.playerTwo = null;
+        this.playerTurn = 1;
+    }
+
+    public Player getCurrentPlayer() {
+        if (playerTurn == 1) {
+            return playerOne;
+        } else if (playerTurn == 2) {
+            return playerTwo;
+        }
+        return null;
+    }
+
+    public Player getOpponent() {
+        if (playerTurn == 1) {
+            return playerTwo;
+        } else if (playerTurn == 2) {
+            return playerOne;
+        }
+        return null;
+    }
+
+    public void nextTurn() {
+        if (playerTurn == 1) {
+            playerTurn = 2;
+        } else if (playerTurn == 2) {
+            playerTurn = 1;
+        }
     }
 
     public Cards getChance() {
@@ -129,6 +157,20 @@ public class State {
 
     public List<String> getActionList() {
         return this.actionList;
+    }
+
+    public int getReward() {
+        int reward;
+        if (currState == State.States.END) {
+            if (getCurrentPlayer() == getPlayerOne()) {
+                reward = 1;
+            } else {
+                reward = -1;
+            }
+        } else {
+            reward = 0;
+        }
+        return reward;
     }
 
 

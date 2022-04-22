@@ -2,22 +2,26 @@ package Tree;
 
 import Monopoly.State;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
 public class Node {
     private State data;
     private Node parent;
-    private List<Node> children;
+    private ArrayList<Node> children;
     private int reward;
     private int visitNumber;
+    private int incomingAction;
 
-    public Node(State data, Node parent, List<Node> children, int newReward, int newVisitNumber) {
+    public Node(State data, Node parent, ArrayList<Node> children, int newReward, int newVisitNumber, int incomingAction) {
         this.data = data;
         this.parent = parent;
         this.children = children;
         this.reward = newReward;
         this.visitNumber = newVisitNumber;
+        this.incomingAction = incomingAction;
     }
 
     public void addNode(Node nodeToAdd, Node parent) {
@@ -69,7 +73,7 @@ public class Node {
         this.data = newData;
     }
 
-    public double getReward() {
+    public int getReward() {
         return reward;
     }
 
@@ -83,6 +87,14 @@ public class Node {
 
     public void addVisitNumber(int newVisitNumber) {
         this.visitNumber += newVisitNumber;
+    }
+
+    public int getIncomingAction() {
+        return this.incomingAction;
+    }
+
+    public void setIncomingAction(int action) {
+        this.incomingAction = action;
     }
 
 }
