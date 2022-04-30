@@ -17,9 +17,9 @@ public class MonteCarloPlayer implements Player {
     private int numberGetOutOfJailCards;
     private boolean chanceGetOutOfJailCardHeld;
     private boolean sim;
-    private int action;
+    private int actionValue;
 
-    public MonteCarloPlayer(State state) {
+    public MonteCarloPlayer() {
         money = 1500;
         properties = new ArrayList<>();
         position = 0;
@@ -28,6 +28,14 @@ public class MonteCarloPlayer implements Player {
         numberGetOutOfJailCards = 0;
         chanceGetOutOfJailCardHeld = false;
         sim = false;
+    }
+
+    private void setActionValue(int actionValue) {
+        this.actionValue = actionValue;
+    }
+
+    private int getActionValue() {
+        return this.actionValue;
     }
 
     public String getName() {
@@ -138,11 +146,19 @@ public class MonteCarloPlayer implements Player {
     }
 
     public int input(State state) {
+        // if simulating dont run tree search
         if (sim) {
-            return randomAction(state);
+            // if running tree policy then choose random action
+            if (actionValue == 0) {
+                return randomAction(state);
+            } else {
+                // if trying to find next state (for expand), then return actionValue
+                return actionValue;
+            }
         }
         // perform tree search
-        return UCTSearch(state);
+        State UCTSearchState = new State(state);
+        return UCTSearch(UCTSearchState);
     }
 
     public int UCTSearch(State state) {
@@ -161,7 +177,7 @@ public class MonteCarloPlayer implements Player {
 
     public Node treePolicy(Node node) {
         while (!node.isTerminal()) {
-            if (node.getChildren() == null) {
+            if (node.getChildren().size() == 0) {
                 return expand(node);
             } else {
                 node = bestChild(node, 0.8);
@@ -176,7 +192,7 @@ public class MonteCarloPlayer implements Player {
             // choose random action
             int action = randomAction(state);
             // get new state
-            state = getNextStateNode(action, state).getData();
+            state = getNextState(action, state);
         }
         // return state's reward
         return state.getReward();
@@ -219,7 +235,9 @@ public class MonteCarloPlayer implements Player {
         List<String> actionList = node.getData().getActionList();
         // loop through each action and add node
         for (int i = 1; i <= actionList.size(); i++) {
-            Node newNode = getNextStateNode(i, node.getData());
+            // CHECK IF NODE ALREADY EXISTS
+            State newState = getNextState(i, node.getData());
+            Node newNode = new Node(newState,null, null, newState.getReward(), 0, i);
             node.addNode(newNode, node);
         }
         // return random child
@@ -235,10 +253,11 @@ public class MonteCarloPlayer implements Player {
     // given a node, backpropogate the reward to the root node
     public void backpropogate(Node node, int reward) {
         Node currentNode = node;
-        while (!currentNode.isRoot()) {
+        while (currentNode != null) {
             currentNode.addReward(reward);
             currentNode.addVisitNumber(1);
             // if parent node is different player to current node (i.e. opponent node) then flip reward to negative
+            // needed since there can be multiple input choices in a player's turn
             if (currentNode.getParent().getData().getCurrentPlayer() != currentNode.getData().getCurrentPlayer()) {
                 reward = -reward;
             }
@@ -247,35 +266,21 @@ public class MonteCarloPlayer implements Player {
 
     }
 
-    public Node getNextStateNode(int actionToPerform, State state) {
+    public State getNextState(int actionToPerform, State state) {
         // create new instance of Monopoly
-        Monopoly simMonopoly = new Monopoly(state);
         sim = true;
+        setActionValue(actionToPerform);
         // perform action (i.e. tick() once)
-        simMonopoly.tick();
+        State newState = Monopoly.tick(state);
         sim = false;
-        // get state
-        State newState = simMonopoly.getState();
-        // get state reward
-        int reward = newState.getReward();
-        // put state into node format
-        return new Node(newState, null, null, reward, 0, actionToPerform);
+        setActionValue(0);
+        return newState;
     }
 
 
     public int randomAction(State state) {
         Random rand = new Random();
         return rand.nextInt(state.actionList.size()) + 1;
-    }
-}
-
-class simulateReturn<T> {
-    public final Node leafNode;
-    public final double reward;
-
-    public simulateReturn(Node leafNode, double reward) {
-        this.leafNode = leafNode;
-        this.reward = reward;
     }
 }
 

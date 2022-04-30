@@ -36,6 +36,22 @@ public class State {
         this.playerTurn = 1;
     }
 
+    public State(State newState) {
+        this.board = newState.board;
+        this.value = newState.value;
+        this.dice = newState.dice;
+        this.chance = newState.chance;
+        this.communityChest = newState.communityChest;
+        this.actionList = newState.actionList;
+        this.dataSquares = newState.dataSquares;
+        this.currState = newState.currState;
+        this.playerOne = newState.playerOne;
+        this.playerTwo = newState.playerTwo;
+        this.playerTurn = newState.playerTurn;
+        this.doubles = newState.doubles;
+        this.diceRoll = newState.diceRoll;
+    }
+
     public Player getCurrentPlayer() {
         if (playerTurn == 1) {
             return playerOne;

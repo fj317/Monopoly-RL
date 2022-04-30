@@ -2,10 +2,7 @@ package Tree;
 
 import Monopoly.State;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class Node {
     private State data;
@@ -18,7 +15,15 @@ public class Node {
     public Node(State data, Node parent, ArrayList<Node> children, int newReward, int newVisitNumber, int incomingAction) {
         this.data = data;
         this.parent = parent;
-        this.children = children;
+        this.children = Objects.requireNonNullElseGet(children, ArrayList::new);
+        this.reward = newReward;
+        this.visitNumber = newVisitNumber;
+        this.incomingAction = incomingAction;
+    }
+
+    public Node(Node parent, ArrayList<Node> children, int newReward, int newVisitNumber, int incomingAction) {
+        this.parent = parent;
+        this.children = Objects.requireNonNullElseGet(children, ArrayList::new);
         this.reward = newReward;
         this.visitNumber = newVisitNumber;
         this.incomingAction = incomingAction;
