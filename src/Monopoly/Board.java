@@ -11,6 +11,10 @@ public class Board {
         makeGroups();
     }
 
+    public Board(Board newBoard) {
+        this.board = newBoard.board;
+    }
+
     public Square[] getBoard() {
         return this.board;
     }

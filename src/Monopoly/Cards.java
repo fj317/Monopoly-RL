@@ -23,6 +23,18 @@ public class Cards {
         outOfJailCardDrawn = false;
     }
 
+    public Cards(Cards newCard) {
+        this.text = newCard.text;
+        this.value = newCard.value;
+        this.action = newCard.action;
+        this.travelTo = newCard.travelTo;
+        this.travel = newCard.travel;
+        this.houseCost = newCard.houseCost;
+        this.hotelCost = newCard.hotelCost;
+        this.outOfJailCardDrawn = newCard.outOfJailCardDrawn;
+        this.type = newCard.type;
+    }
+
     public Cards getCard() {
         switch (this.type) {
             case CHANCE:

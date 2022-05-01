@@ -5,16 +5,12 @@ import Player.*;
 import java.util.*;
 
 public class Monopoly {
-    private static int turnNumber;
 
     public static void main(String[] args) {
         Monopoly monopoly = new Monopoly();
         monopoly.run();
     }
 
-    public int getTurnNumber() {
-        return turnNumber;
-    }
 
     private void getPlayers(State currState) {
         // add human or AI players etc
@@ -30,15 +26,14 @@ public class Monopoly {
         State currState = new State();
         getPlayers(currState);
         while (currState.getCurrState() != State.States.END) {
-            currState = tick(currState);
+            tick(currState);
         }
         Player winner = currState.getCurrentPlayer();
         System.out.println("THE WINNER IS " + winner.getName());
         System.out.println("WELL DONE!!!");
-        System.out.println("Total turns: " + turnNumber);
     }
 
-    public static State tick(State currState) {
+    public static void tick(State currState) {
         int answer;
         Square currentSquare;
         int propertyCost;
@@ -50,10 +45,15 @@ public class Monopoly {
         Player currentPlayer = currState.getCurrentPlayer();
         Player opponent = currState.getOpponent();
 
+        // check if game is too long
+        if (currState.getTickNumber() > 10000) {
+            currState.setState(State.States.END);
+        }
+
         switch (currState.getCurrState()) {
             case NONE:
                 // check if doubles, if so reroll dice
-                if (currState.doubles) {
+                if (currState.getDoubles()) {
                     currState.setState(State.States.ROLL);
                     break;
                 }
@@ -191,7 +191,7 @@ public class Monopoly {
                 break;
             case END_TURN:
                 currState.nextTurn();
-                turnNumber++;
+                currState.addOneTick();
                 currState.setState(State.States.TURN);
                 break;
             case JAIL_TURN:
@@ -599,14 +599,13 @@ public class Monopoly {
                 // go to square
                 System.out.print("You rolled a " + roll.value);
                 if (roll.isDouble) System.out.print( " (double)");
-                Square[] board = currState.board.getBoard();
+                Square[] board = currState.getBoard().getBoard();
                 System.out.println(" and landed on " + board[(currentPlayer.getPosition() + roll.value) % 40].getName());
                 currentPlayer.move(roll.value);
                 // deal with square's actions
                 currState.setState(State.States.SQUARE_ACTION);
                 break;
         }
-        return currState;
     }
 
     private static ArrayList<String> SquareListToStringList(ArrayList<Square> list) {
@@ -752,7 +751,7 @@ public class Monopoly {
             System.out.println("-----------------------------");
             System.out.println("Name: " + player.getName());
             System.out.println("Money: " + player.getMoney());
-            System.out.println("Current position: " + currState.board.getSquare(player.getPosition()).getName());
+            System.out.println("Current position: " + currState.getBoard().getSquare(player.getPosition()).getName());
             System.out.print("Owned properties: ");
             boolean firstProperty = true;
             for (Square sq: player.getProperties()) {

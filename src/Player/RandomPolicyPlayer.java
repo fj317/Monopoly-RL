@@ -27,6 +27,17 @@ public class RandomPolicyPlayer implements Player {
         chanceGetOutOfJailCardHeld = false;
     }
 
+    public RandomPolicyPlayer(RandomPolicyPlayer newPlayer) {
+        this.money = newPlayer.money;
+        this.properties = new ArrayList<Square>(newPlayer.properties);
+        this.position = newPlayer.position;
+        this.playerName = newPlayer.playerName;
+        this.inJail = newPlayer.inJail;
+        this.jailTurn = newPlayer.jailTurn;
+        this.numberGetOutOfJailCards = newPlayer.getNumberGetOutOfJailCards();
+        this.chanceGetOutOfJailCardHeld = newPlayer.chanceGetOutOfJailCardHeld;
+    }
+
     public String getName() {
         return playerName;
     }
@@ -142,7 +153,7 @@ public class RandomPolicyPlayer implements Player {
 
     public int input(State state) {
         Random rand = new Random();
-        int decision = rand.nextInt(state.actionList.size()) + 1;
+        int decision = rand.nextInt(state.getActionList().size()) + 1;
         System.out.println(decision);
         return decision;
     }

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 
 // interface so different player classes can be made (human, AI, etc)
 public interface Player {
+
     String getName();
 
     // money

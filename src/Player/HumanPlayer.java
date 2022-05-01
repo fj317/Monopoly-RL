@@ -137,7 +137,7 @@ public class HumanPlayer implements Player {
         int answer;
         do {
             answer = input.inputInt();
-        } while (answer < 1 || answer > state.actionList.size());
+        } while (answer < 1 || answer > state.getActionList().size());
         return answer;
     }
 }

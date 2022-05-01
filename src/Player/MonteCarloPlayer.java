@@ -30,6 +30,19 @@ public class MonteCarloPlayer implements Player {
         sim = false;
     }
 
+    public MonteCarloPlayer(MonteCarloPlayer newPlayer) {
+        this.money = newPlayer.money;
+        this.properties = new ArrayList<Square>(newPlayer.properties);
+        this.position = newPlayer.position;
+        this.playerName = newPlayer.playerName;
+        this.inJail = newPlayer.inJail;
+        this.jailTurn = newPlayer.jailTurn;
+        this.numberGetOutOfJailCards = newPlayer.getNumberGetOutOfJailCards();
+        this.chanceGetOutOfJailCardHeld = newPlayer.chanceGetOutOfJailCardHeld;
+        this.actionValue = newPlayer.actionValue;
+        this.sim = newPlayer.sim;
+    }
+
     private void setActionValue(int actionValue) {
         this.actionValue = actionValue;
     }
@@ -168,7 +181,7 @@ public class MonteCarloPlayer implements Player {
         int rolls = 0;
         while (rolls < rollouts) {
             Node selectedNode = treePolicy(newRoot);
-            int reward = defaultPolicy(selectedNode.getData());
+            int reward = defaultPolicy(new State(selectedNode.getData()));
             backpropogate(selectedNode, reward);
             rolls++;
         }
@@ -236,7 +249,7 @@ public class MonteCarloPlayer implements Player {
         // loop through each action and add node
         for (int i = 1; i <= actionList.size(); i++) {
             // CHECK IF NODE ALREADY EXISTS
-            State newState = getNextState(i, node.getData());
+            State newState = getNextState(i, new State(node.getData()));
             Node newNode = new Node(newState,null, null, newState.getReward(), 0, i);
             node.addNode(newNode, node);
         }
@@ -258,7 +271,10 @@ public class MonteCarloPlayer implements Player {
             currentNode.addVisitNumber(1);
             // if parent node is different player to current node (i.e. opponent node) then flip reward to negative
             // needed since there can be multiple input choices in a player's turn
-            if (currentNode.getParent().getData().getCurrentPlayer() != currentNode.getData().getCurrentPlayer()) {
+            if (currentNode.getParent() == null) {
+                return;
+            }
+            if (currentNode.getParent().getData().getPlayerTurn() != currentNode.getData().getPlayerTurn()) {
                 reward = -reward;
             }
             currentNode = currentNode.getParent();
@@ -268,19 +284,23 @@ public class MonteCarloPlayer implements Player {
 
     public State getNextState(int actionToPerform, State state) {
         // create new instance of Monopoly
-        sim = true;
+        ((MonteCarloPlayer)state.getPlayerOne()).setSim(true);
         setActionValue(actionToPerform);
         // perform action (i.e. tick() once)
-        State newState = Monopoly.tick(state);
-        sim = false;
+        Monopoly.tick(state);
+        ((MonteCarloPlayer)state.getPlayerOne()).setSim(false);
         setActionValue(0);
-        return newState;
+        return state;
+    }
+
+    public void setSim(boolean value) {
+        this.sim = value;
     }
 
 
     public int randomAction(State state) {
         Random rand = new Random();
-        return rand.nextInt(state.actionList.size()) + 1;
+        return rand.nextInt(state.getActionList().size()) + 1;
     }
 }
 

@@ -1,26 +1,29 @@
 package Monopoly;
 
 import Player.Player;
+import Player.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class State {
-    public Board board;
-    public Player playerOne;
-    public Player playerTwo;
+    private Board board;
+    private Player playerOne;
+    private Player playerTwo;
 
-    public int diceRoll;
-    public int value;
-    public boolean doubles;
+    private int diceRoll;
+    private int value;
+    private boolean doubles;
     private final Dice dice;
     private Cards chance;
     private Cards communityChest;
 
-    public List<String> actionList;
-    public States currState;
-    public ArrayList<Square> dataSquares;
+    private List<String> actionList;
+    private States currState;
+    private ArrayList<Square> dataSquares;
     private int playerTurn;
+    private int tickNumber;
 
     public State() {
         this.board = new Board();
@@ -37,20 +40,22 @@ public class State {
     }
 
     public State(State newState) {
-        this.board = newState.board;
+        this.board = new Board(newState.board);
         this.value = newState.value;
         this.dice = newState.dice;
-        this.chance = newState.chance;
-        this.communityChest = newState.communityChest;
+        this.chance = new Cards(newState.chance);
+        this.communityChest = new Cards(newState.communityChest);
         this.actionList = newState.actionList;
         this.dataSquares = newState.dataSquares;
         this.currState = newState.currState;
-        this.playerOne = newState.playerOne;
-        this.playerTwo = newState.playerTwo;
+        this.playerOne = new MonteCarloPlayer((MonteCarloPlayer) newState.playerOne);
+        this.playerTwo = new RandomPolicyPlayer((RandomPolicyPlayer) newState.playerTwo);
         this.playerTurn = newState.playerTurn;
         this.doubles = newState.doubles;
         this.diceRoll = newState.diceRoll;
     }
+
+
 
     public Player getCurrentPlayer() {
         if (playerTurn == 1) {
@@ -176,17 +181,27 @@ public class State {
     }
 
     public int getReward() {
-        int reward;
+        int reward = 0;
         if (currState == State.States.END) {
             if (getCurrentPlayer() == getPlayerOne()) {
                 reward = 1;
-            } else {
+            } else if (getCurrentPlayer() == getPlayerTwo()){
                 reward = -1;
             }
-        } else {
-            reward = 0;
         }
         return reward;
+    }
+
+    public int getTickNumber() {
+        return this.tickNumber;
+    }
+
+    public void addOneTick() {
+        this.tickNumber ++;
+    }
+
+    public int getPlayerTurn() {
+        return this.playerTurn;
     }
 
 
