@@ -4,6 +4,7 @@ import Monopoly.*;
 import Tree.Node;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -171,25 +172,25 @@ public class MonteCarloPlayer implements Player {
         }
         // perform tree search
         State UCTSearchState = new State(state);
-        return UCTSearch(UCTSearchState);
+        return MCTSearch(UCTSearchState);
     }
 
-    public int UCTSearch(State state) {
+    public int MCTSearch(State state) {
         // create root node with state
         Node newRoot = new Node(state, null, null, 0, 0, 0);
         int rollouts = 500;
         int rolls = 0;
         while (rolls < rollouts) {
             Node selectedNode = treePolicy(newRoot);
-            int reward = defaultPolicy(new State(selectedNode.getData()));
+            int reward = defaultPolicy(selectedNode, newRoot);
             backpropogate(selectedNode, reward);
             rolls++;
         }
-        return bestChild(newRoot, 0.8).getIncomingAction();
+        return mostRobustChild(newRoot);
     }
 
     public Node treePolicy(Node node) {
-        while (!node.isTerminal()) {
+        while (!node.isTurnTerminal()) {
             if (node.getChildren().size() == 0) {
                 return expand(node);
             } else {
@@ -199,7 +200,9 @@ public class MonteCarloPlayer implements Player {
         return node;
     }
 
-    public int defaultPolicy(State state) {
+    public int defaultPolicy(Node selectedNode, Node root) {
+        State state = rootToNode(root, selectedNode);
+        // READY FOR DEFAULT POLICY
         // while state isnt terminal
         while (state.getCurrState() != State.States.END) {
             // choose random action
@@ -228,6 +231,21 @@ public class MonteCarloPlayer implements Player {
         return children.get(getLargestValueIndex(uctValues));
     }
 
+    private int mostRobustChild(Node root) {
+        // get children
+        List<Node> children = root.getChildren();
+        int largestCount = 0;
+        int largestCountAction = 0;
+        // go through each child and compare visitCounts
+        for (Node child: children) {
+            if (child.getVisitNumber() > largestCount) {
+                largestCount = child.getVisitNumber();
+                largestCountAction = child.getIncomingAction();
+            }
+        }
+        return largestCountAction;
+        }
+
     // needed for bestChild
     // TO DO: DEAL WITH EQUAL UCT VALUES BY RANDOM
     private int getLargestValueIndex(List<Double> list) {
@@ -248,10 +266,13 @@ public class MonteCarloPlayer implements Player {
         List<String> actionList = node.getData().getActionList();
         // loop through each action and add node
         for (int i = 1; i <= actionList.size(); i++) {
-            // CHECK IF NODE ALREADY EXISTS
-            State newState = getNextState(i, new State(node.getData()));
-            Node newNode = new Node(newState,null, null, newState.getReward(), 0, i);
-            node.addNode(newNode, node);
+            // checking if node exists, only add if not already there
+            if (!node.checkNodeExists(i)) {
+                State newState = new State(node.getData());
+                newState = getNextState(i, newState);
+                Node newNode = new Node(newState, null, null, 0, 0, i);
+                node.addNode(newNode, node);
+            }
         }
         // return random child
         return randomChild(node);
@@ -301,6 +322,24 @@ public class MonteCarloPlayer implements Player {
     public int randomAction(State state) {
         Random rand = new Random();
         return rand.nextInt(state.getActionList().size()) + 1;
+    }
+
+    private State rootToNode(Node root, Node selectedNode) {
+        // must select actions from root to the selectedNode
+        ArrayList<Integer> actions = new ArrayList<Integer>();
+        while (selectedNode.getParent() != null) {
+            actions.add(selectedNode.getIncomingAction());
+            selectedNode = selectedNode.getParent();
+        }
+        // reverse list so first action is from root
+        Collections.reverse(actions);
+        // make new state
+        State state = new State(root.getData());
+        // start from root and select the actions chosen
+        for (int action : actions) {
+            getNextState(action, state);
+        }
+        return state;
     }
 }
 

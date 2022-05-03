@@ -29,6 +29,17 @@ public class Node {
         this.incomingAction = incomingAction;
     }
 
+    // check whether for a node a child node with the action exists already
+    public boolean checkNodeExists(int actionNumber) {
+        // for each node
+        for (Node currentNode : this.children) {
+            if (currentNode.incomingAction == actionNumber) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void addNode(Node nodeToAdd, Node parent) {
         parent.children.add(nodeToAdd);
         nodeToAdd.parent = parent;
@@ -68,6 +79,10 @@ public class Node {
 
     public boolean isTerminal() {
         return this.data.getCurrState() == State.States.END;
+    }
+
+    public boolean isTurnTerminal() {
+        return this.data.getCurrState() == State.States.END_TURN;
     }
 
     public boolean isRoot() {
