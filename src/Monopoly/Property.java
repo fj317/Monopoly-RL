@@ -11,14 +11,14 @@ public class Property implements Square {
     private final int fourHouseCost;
     private final int hotelCost;
 
-    private final int value; //cost to purchase property
-    private final int houseCost; //cost to purchase one house on property
+    private final int value; // cost to purchase property
+    private final int houseCost; // cost to purchase one house on property
     private final int pos;
     private final String name;
-    private int buildings;  //building status
-    private boolean monopoly; //does one player own all properties in set?
-    private boolean owned;  //is property owned?
-    private boolean mortgaged; //is property mortgaged
+    private int buildings;  // building status
+    private boolean monopoly; // whether one player own all properties in set
+    private boolean owned;  // is property owned
+    private boolean mortgaged; // is property mortgaged
     private Player owner;
     private Property groupPropertyA;
     private Property groupPropertyB;
@@ -36,6 +36,25 @@ public class Property implements Square {
         this.fourHouseCost = fourHouse;
         this.hotelCost = hotel;
         this.monopoly = false;
+    }
+
+
+    public Property(Property newProperty, Player owner) {
+        this.name = newProperty.name;
+        this.value = newProperty.value;
+        this.pos = newProperty.pos;
+        this.rent = newProperty.rent;
+        this.houseCost = newProperty.houseCost;
+        this.oneHouseCost = newProperty.oneHouseCost;
+        this.twoHouseCost = newProperty.twoHouseCost;
+        this.threeHouseCost = newProperty.threeHouseCost;
+        this.fourHouseCost = newProperty.fourHouseCost;
+        this.hotelCost = newProperty.hotelCost;
+        this.monopoly = newProperty.monopoly;
+        this.owner = owner;
+        this.mortgaged = newProperty.mortgaged;
+        this.buildings = newProperty.buildings;
+
     }
 
     public void setGroup(Property groupA, Property groupB) {

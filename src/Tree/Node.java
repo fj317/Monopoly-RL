@@ -11,22 +11,39 @@ public class Node {
     private int reward;
     private int visitNumber;
     private int incomingAction;
+    private int playerTurn;
+    private boolean terminal;
 
-    public Node(State data, Node parent, ArrayList<Node> children, int newReward, int newVisitNumber, int incomingAction) {
+    public Node(State data, Node parent, ArrayList<Node> children, int newReward, int newVisitNumber, int incomingAction, boolean terminal, int playerTurn) {
         this.data = data;
         this.parent = parent;
         this.children = Objects.requireNonNullElseGet(children, ArrayList::new);
         this.reward = newReward;
         this.visitNumber = newVisitNumber;
         this.incomingAction = incomingAction;
+        this.terminal = terminal;
+        this.playerTurn = playerTurn;
     }
 
-    public Node(Node parent, ArrayList<Node> children, int newReward, int newVisitNumber, int incomingAction) {
+    public Node(Node parent, ArrayList<Node> children, int newReward, int newVisitNumber, int incomingAction, boolean terminal, int playerTurn) {
         this.parent = parent;
         this.children = Objects.requireNonNullElseGet(children, ArrayList::new);
         this.reward = newReward;
         this.visitNumber = newVisitNumber;
         this.incomingAction = incomingAction;
+        this.terminal = terminal;
+        this.playerTurn = playerTurn;
+    }
+
+    public Node(Node node) {
+        this.data = node.data;
+        this.parent = node.parent;
+        this.children = node.children;
+        this.reward = node.reward;
+        this.visitNumber = node.visitNumber;
+        this.incomingAction = node.incomingAction;
+        this.terminal = node.terminal;
+        this.playerTurn = node.playerTurn;
     }
 
     // check whether for a node a child node with the action exists already
@@ -45,14 +62,6 @@ public class Node {
         nodeToAdd.parent = parent;
     }
 
-    public void removeNode(Node nodeToRemove, Node parent) {
-        parent.children.remove(nodeToRemove);
-    }
-
-    public boolean isLeaf() {
-        return this.children.isEmpty();
-    }
-
     public Node getParent() {
         return this.parent;
     }
@@ -65,32 +74,8 @@ public class Node {
         return this.data;
     }
 
-    public Node expand() {
-        Node currentNode = this;
-        while (!this.isTerminal()) {
-            // using heurstic/randomly expand nodes
-            Random rand = new Random();
-            int actionIndex = rand.nextInt(this.children.size());
-            // follow action to next node
-            currentNode = currentNode.children.get(actionIndex);
-        }
-        return currentNode;
-    }
-
     public boolean isTerminal() {
-        return this.data.getCurrState() == State.States.END;
-    }
-
-    public boolean isTurnTerminal() {
-        return this.data.getCurrState() == State.States.END_TURN;
-    }
-
-    public boolean isRoot() {
-        return this.parent == null;
-    }
-
-    public void setData(State newData) {
-        this.data = newData;
+        return terminal;
     }
 
     public int getReward() {
@@ -113,8 +98,11 @@ public class Node {
         return this.incomingAction;
     }
 
-    public void setIncomingAction(int action) {
-        this.incomingAction = action;
+    public int getPlayerTurn() {
+        return this.playerTurn;
     }
 
+    public void setPlayerTurn(int playerTurn) {
+        this.playerTurn = playerTurn;
+    }
 }

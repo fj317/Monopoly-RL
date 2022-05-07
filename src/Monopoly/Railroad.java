@@ -15,6 +15,14 @@ public class Railroad implements Square {
         this.name = name;
     }
 
+    public Railroad(Railroad newRailroad, Player owner) {
+        this.pos = newRailroad.pos;
+        this.name = newRailroad.name;
+        this.mortgaged = newRailroad.mortgaged;
+        this.owner = owner;
+        this.owned = newRailroad.owned;
+    }
+
     public int getPosition() {
         return this.pos;
     }

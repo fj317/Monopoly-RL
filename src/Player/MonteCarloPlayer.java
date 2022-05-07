@@ -2,6 +2,7 @@ package Player;
 
 import Monopoly.*;
 import Tree.Node;
+import Tree.SelectedNode;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -160,16 +161,6 @@ public class MonteCarloPlayer implements Player {
     }
 
     public int input(State state) {
-        // if simulating dont run tree search
-        if (sim) {
-            // if running tree policy then choose random action
-            if (actionValue == 0) {
-                return randomAction(state);
-            } else {
-                // if trying to find next state (for expand), then return actionValue
-                return actionValue;
-            }
-        }
         // perform tree search
         State UCTSearchState = new State(state);
         return MCTSearch(UCTSearchState);
@@ -177,41 +168,94 @@ public class MonteCarloPlayer implements Player {
 
     public int MCTSearch(State state) {
         // create root node with state
-        Node newRoot = new Node(state, null, null, 0, 0, 0);
-        int rollouts = 500;
+        Node newRoot = new Node(state, null, null, 0, 0, 0, false, 1);
+        int rollouts = 1000;
         int rolls = 0;
         while (rolls < rollouts) {
-            Node selectedNode = treePolicy(newRoot);
-            int reward = defaultPolicy(selectedNode, newRoot);
-            backpropogate(selectedNode, reward);
+            //System.out.println("------- NEW ROLLOUT " + rolls + " -------");
+            SelectedNode selectedNode = treePolicy(newRoot);
+            int reward = defaultPolicy(selectedNode.getSelectedNodeState());
+            backpropogate(selectedNode.getSelectedNode(), reward);
             rolls++;
         }
+        //System.out.println("END OF ROLLOUTS");
         return mostRobustChild(newRoot);
     }
 
-    public Node treePolicy(Node node) {
-        while (!node.isTurnTerminal()) {
-            if (node.getChildren().size() == 0) {
-                return expand(node);
+//    public Node treePolicy(Node node) {
+//        System.out.println("TREE POLICY START");
+//        Node root = new Node(node);
+//        while (!node.isTerminal()) {
+//            if (node.getChildren().size() == 0) {
+//                return expand(node, root);
+//            } else {
+//                node = bestChild(node, 0.8);
+//            }
+//        }
+//        System.out.println("TREE POLICY END");
+//        return node;
+//    }
+
+    public SelectedNode treePolicy(Node node) {
+        // get root node state
+        State currentState = new State(node.getData());
+        while (!node.isTerminal()) {
+            if (node.getChildren().size() != currentState.getActionList().size()) {
+                return expand(node, currentState);
             } else {
                 node = bestChild(node, 0.8);
+                SimplifiedMonopoly.stepNoOutput(currentState, node.getIncomingAction());
+                node.setPlayerTurn(currentState.getPlayerTurn());
             }
         }
-        return node;
+        return new SelectedNode(node, currentState);
     }
 
-    public int defaultPolicy(Node selectedNode, Node root) {
-        State state = rootToNode(root, selectedNode);
-        // READY FOR DEFAULT POLICY
-        // while state isnt terminal
-        while (state.getCurrState() != State.States.END) {
-            // choose random action
-            int action = randomAction(state);
-            // get new state
-            state = getNextState(action, state);
+    // given a node, update the node with the children nodes
+    public SelectedNode expand(Node node, State currentNodeState) {
+        boolean terminal;
+        // loop through each action and add node
+        for (int i = 1; i <= currentNodeState.getActionList().size(); i++) {
+            terminal = false;
+            //System.out.println("ACTION TRY " + i);
+            if (!node.checkNodeExists(i)) {
+                // play one tick with action to find terminal and player turn
+                State tempState = new State(currentNodeState);
+                SimplifiedMonopoly.stepNoOutput(tempState, i);
+                if (SimplifiedMonopoly.gameFinished(tempState)) {
+                    terminal = true;
+                }
+                Node newNode = new Node(null, null, 0, 0, i, terminal, tempState.getPlayerTurn());
+                // addNode method deals with parent and children fields
+                node.addNode(newNode, node);
+            }
         }
+        //System.out.println("TREE POLICY END");
+        // return random child
+        Random rand = new Random();
+        int index = rand.nextInt(currentNodeState.getActionList().size());
+        Node chosenNode = node.getChildren().get(index);
+        SimplifiedMonopoly.stepNoOutput(currentNodeState, chosenNode.getIncomingAction());
+        return new SelectedNode(chosenNode, currentNodeState);
+    }
+
+    public int defaultPolicy(State state) {
+        //System.out.println("STARTING SIMULATION");
+        // while state isnt terminal
+        while (!SimplifiedMonopoly.gameFinished(state)) {
+            // generate random action and perform in environment
+            int action = randomAction(state);
+            //System.out.println("In defaultPolicy() --- Input State: " + state.getCurrState() + ". Action: " + action);
+            SimplifiedMonopoly.stepNoOutput(state, action);
+        }
+        //System.out.println("SIMULATION FINISHED");
         // return state's reward
         return state.getReward();
+    }
+
+    public int randomAction(State state) {
+        Random rand = new Random();
+        return rand.nextInt(state.getActionList().size()) + 1;
     }
 
     public Node bestChild(Node node, double exploration) {
@@ -260,43 +304,17 @@ public class MonteCarloPlayer implements Player {
         return highestIndex;
     }
 
-    // given a node, update the node with the children nodes
-    public Node expand(Node node) {
-        // get action list for current state
-        List<String> actionList = node.getData().getActionList();
-        // loop through each action and add node
-        for (int i = 1; i <= actionList.size(); i++) {
-            // checking if node exists, only add if not already there
-            if (!node.checkNodeExists(i)) {
-                State newState = new State(node.getData());
-                newState = getNextState(i, newState);
-                Node newNode = new Node(newState, null, null, 0, 0, i);
-                node.addNode(newNode, node);
-            }
-        }
-        // return random child
-        return randomChild(node);
-    }
-
-    public Node randomChild(Node node) {
-        Random rand = new Random();
-        int index =  rand.nextInt(node.getChildren().size());
-        return node.getChildren().get(index);
-    }
-
     // given a node, backpropogate the reward to the root node
     public void backpropogate(Node node, int reward) {
         Node currentNode = node;
         while (currentNode != null) {
             currentNode.addReward(reward);
             currentNode.addVisitNumber(1);
-            // if parent node is different player to current node (i.e. opponent node) then flip reward to negative
-            // needed since there can be multiple input choices in a player's turn
-            if (currentNode.getParent() == null) {
-                return;
-            }
-            if (currentNode.getParent().getData().getPlayerTurn() != currentNode.getData().getPlayerTurn()) {
-                reward = -reward;
+            if (currentNode.getParent() != null) {
+                // if parent node is different player to current node (i.e. opponent node) then flip reward to negative
+                if (currentNode.getPlayerTurn() != currentNode.getParent().getPlayerTurn()) {
+                    reward = -reward;
+                }
             }
             currentNode = currentNode.getParent();
         }
@@ -304,24 +322,9 @@ public class MonteCarloPlayer implements Player {
     }
 
     public State getNextState(int actionToPerform, State state) {
-        // create new instance of Monopoly
-        ((MonteCarloPlayer)state.getPlayerOne()).setSim(true);
-        setActionValue(actionToPerform);
-        // perform action (i.e. tick() once)
-        Monopoly.tick(state);
-        ((MonteCarloPlayer)state.getPlayerOne()).setSim(false);
-        setActionValue(0);
+        // perform action (i.e. step() once)
+        SimplifiedMonopoly.stepNoOutput(state, actionToPerform);
         return state;
-    }
-
-    public void setSim(boolean value) {
-        this.sim = value;
-    }
-
-
-    public int randomAction(State state) {
-        Random rand = new Random();
-        return rand.nextInt(state.getActionList().size()) + 1;
     }
 
     private State rootToNode(Node root, Node selectedNode) {
@@ -330,6 +333,7 @@ public class MonteCarloPlayer implements Player {
         while (selectedNode.getParent() != null) {
             actions.add(selectedNode.getIncomingAction());
             selectedNode = selectedNode.getParent();
+
         }
         // reverse list so first action is from root
         Collections.reverse(actions);
@@ -338,6 +342,7 @@ public class MonteCarloPlayer implements Player {
         // start from root and select the actions chosen
         for (int action : actions) {
             getNextState(action, state);
+            //System.out.println("In rootToNode() --- State: " + state.getCurrState() + ". Action: " + action);
         }
         return state;
     }

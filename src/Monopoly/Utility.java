@@ -2,7 +2,7 @@ package Monopoly;
 
 import Player.*;
 
-public class Utilty implements Square {
+public class Utility implements Square {
     private final int pos;
     private final String name;
     private final int value = 150; // cost to buy
@@ -10,9 +10,17 @@ public class Utilty implements Square {
     private Player owner;
     private boolean owned;  //is property owned?
 
-    public Utilty(int pos, String name, int group) {
+    public Utility(int pos, String name, int group) {
         this.pos = pos;
         this.name = name;
+    }
+
+    public Utility(Utility newUtility, Player owner) {
+        this.pos = newUtility.pos;
+        this.name = newUtility.name;
+        this.mortgaged = newUtility.mortgaged;
+        this.owner = owner;
+        this.owned = newUtility.owned;
     }
 
 
@@ -49,7 +57,7 @@ public class Utilty implements Square {
         int numberOwned = 0;
         // go through each property and check if utility, if it is add to numberOwned
         for (Square square: owner.getProperties())
-            if (square instanceof Utilty) {
+            if (square instanceof Utility) {
                 numberOwned++;
             }
         switch (numberOwned) {

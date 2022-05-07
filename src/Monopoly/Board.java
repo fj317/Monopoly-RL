@@ -1,5 +1,7 @@
 package Monopoly;
 
+import Player.Player;
+
 public class Board {
     private Square[] board = new Square[40];
 
@@ -11,8 +13,31 @@ public class Board {
         makeGroups();
     }
 
-    public Board(Board newBoard) {
-        this.board = newBoard.board;
+    public Board(Board newBoard, Player playerOne, Player playerTwo) {
+        Square currentSquare;
+        Player owner;
+        for (int i = 0; i < 40; i++) {
+            currentSquare = newBoard.board[i];
+            if (currentSquare.getOwner() == null) {
+                owner = null;
+            } else if (currentSquare.getOwner().getName().equals(playerOne.getName())) {
+                owner = playerOne;
+            } else if (currentSquare.getOwner().getName().equals(playerTwo.getName())) {
+                owner = playerTwo;
+            } else {
+                owner = null;
+            }
+            if (currentSquare instanceof Property) {
+                this.board[i] = new Property((Property)currentSquare, owner);
+            } else if (currentSquare instanceof Utility) {
+                this.board[i] = new Utility((Utility) currentSquare, owner);
+            } else if (currentSquare instanceof Railroad) {
+                this.board[i] = new Railroad((Railroad) currentSquare, owner);
+            } else {
+                this.board[i] = currentSquare;
+            }
+        }
+        makeGroups();
     }
 
     public Square[] getBoard() {
@@ -31,6 +56,8 @@ public class Board {
             case 1:
                 return new Property("Old Kent Road", 60, position, 10, 50, 10, 30, 90, 160, 250);
             case 2:
+            case 17:
+            case 33:
                 // community chest
                 return new CardSquare("Community Chest", position, Cards.CardType.COMMUNITY_CHEST);
             case 3:
@@ -44,6 +71,8 @@ public class Board {
             case 6:
                 return new Property("The Angel, Islington", 100, position, 6, 50, 30, 90, 270, 400, 550);
             case 7:
+            case 22:
+            case 36:
                 // chance
                 return new CardSquare("Chance", position, Cards.CardType.CHANCE);
             case 8:
@@ -57,7 +86,7 @@ public class Board {
                 return new Property("Pall Mall", 140, position, 10, 100, 50, 150, 450, 625, 750);
             case 12:
                 // electric company
-                return new Utilty(position, "Electric Company", 10);
+                return new Utility(position, "Electric Company", 10);
             case 13:
                 return new Property("Whitehall", 140, position, 10, 100, 50, 150, 450, 625, 750);
             case 14:
@@ -67,9 +96,6 @@ public class Board {
                 return new Railroad(position, "Marylebone Station");
             case 16:
                 return new Property("Bow Street", 180, position, 14, 100, 70, 200, 550, 750, 950);
-            case 17:
-                // community chest
-                return new CardSquare("Community Chest", position, Cards.CardType.COMMUNITY_CHEST);
             case 18:
                 return new Property("Marlborough Street", 180, position, 14, 100, 70, 200, 550, 750, 950);
             case 19:
@@ -79,9 +105,6 @@ public class Board {
                 return new OtherSquares(position, "Free Parking");
             case 21:
                 return new Property("The Strand", 220, position, 18, 150, 90, 250, 700, 875, 1050);
-            case 22:
-                // chance
-                return new CardSquare("Chance", position, Cards.CardType.CHANCE);
             case 23:
                 return new Property("Fleet Street", 220, position, 18, 150, 90, 250, 700, 875, 1050);
             case 24:
@@ -95,7 +118,7 @@ public class Board {
                 return new Property("Coventry Street", 260, position, 22, 150, 110, 330, 800, 975, 1150);
             case 28:
                 // water works
-                return new Utilty(position, "Water Works", 10);
+                return new Utility(position, "Water Works", 10);
             case 29:
                 return new Property("Piccadilly", 280, position, 22, 150, 120, 360, 850, 1025, 1200);
             case 30:
@@ -105,17 +128,11 @@ public class Board {
                 return new Property("Regent Street", 300, position, 26, 200, 130, 390, 900, 1100, 1275);
             case 32:
                 return new Property("Oxford Street", 300, position, 26, 200, 130, 390, 900, 1100, 1275);
-            case 33:
-                // community chest
-                return new CardSquare("Community Chest", position, Cards.CardType.COMMUNITY_CHEST);
             case 34:
                 return new Property("Bond Street", 320, position, 28, 200, 150, 450, 1000, 1200, 1400);
             case 35:
                 // liverpool st station
                 return new Railroad(position, "Liverpool St Station");
-            case 36:
-                // chance
-                return new CardSquare("Chance", position, Cards.CardType.CHANCE);
             case 37:
                 return new Property("Park Lane", 350, position, 35, 200, 175, 500, 1100, 1300, 1500);
             case 38:
@@ -168,4 +185,5 @@ public class Board {
 
 
     }
+
 }

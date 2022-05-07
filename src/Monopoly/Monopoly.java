@@ -44,6 +44,9 @@ public class Monopoly {
         System.out.println("Current State: " + currState.getCurrState().toString());
         Player currentPlayer = currState.getCurrentPlayer();
         Player opponent = currState.getOpponent();
+        // set actionList to 1 null element to initialise
+        // needed so that for states where there is no input actions, there is still 1 action outcome to 'take'
+        currState.setActionList(Arrays.asList("null"));
 
         // check if game is too long
         if (currState.getTickNumber() > 10000) {
@@ -74,14 +77,16 @@ public class Monopoly {
                         currState.setState(State.States.MORTGAGE_DECISION);
                         break;
                     case 3:
-                        currState.setState(State.States.TRADE);
+                        currState.setState(State.States.TRADE_PROPERTY_SELECT_1);
                         break;
                     case 4:
-                        currState.setState(State.States.END_TURN);
+                        currState.nextTurn();
+                        currState.addOneTick();
+                        currState.setState(State.States.TURN);
                         break;
                 }
                 break;
-            case TRADE:
+            case TRADE_PROPERTY_SELECT_1:
                 // must have properties
                 if (currentPlayer.getProperties().size() == 0) {
                     System.out.println("You do not have any properties to trade.");
@@ -94,9 +99,7 @@ public class Monopoly {
                     currState.setState(State.States.NONE);
                     break;
                 }
-                currState.setState(State.States.TRADE_PROPERTY_SELECT_1);
-                break;
-            case TRADE_PROPERTY_SELECT_1:
+
                 System.out.println("You own the following properties: ");
                 propertyList = propertySelect(currentPlayer, 0);
                 currState.setActionList(SquareListToStringList(propertyList));
@@ -189,11 +192,6 @@ public class Monopoly {
                 }
                 currState.setState(State.States.NONE);
                 break;
-            case END_TURN:
-                currState.nextTurn();
-                currState.addOneTick();
-                currState.setState(State.States.TURN);
-                break;
             case JAIL_TURN:
                 System.out.println("You are in jail.");
                 System.out.println("Please select choice");
@@ -203,36 +201,27 @@ public class Monopoly {
                 currState.setActionList(Arrays.asList("Use cash", "Use card", "Stay"));
                 answer = currentPlayer.input(currState);
                 if (answer == 1) {
-                    currState.setState(State.States.JAIL_OUT_CASH);
-                } else if (answer == 2) {
-                    currState.setState(State.States.JAIL_OUT_CARD);
-                } else if (answer == 3) {
-                    currState.setState(State.States.ROLL);
-                }
-                break;
-            case JAIL_OUT_CARD:
-                if (currentPlayer.getNumberGetOutOfJailCards() > 0) {
-                    // use the card
-                    if (currentPlayer.useGetOutOfJailCard() == Cards.CardType.CHANCE) {
-                        currState.getChance().returnOutOfJailCard();
+                    // use cash
+                    if (currentPlayer.getMoney() > 50) {
+                        currentPlayer.removeMoney(50);
+                        currentPlayer.leaveJail();
+                        System.out.println("You have left jail.");
                     } else {
-                        currState.getCommunityChest().returnOutOfJailCard();
+                        System.out.println("Insufficient funds to leave jail.");
                     }
-                    currentPlayer.leaveJail();
-                    System.out.println("You have left jail.");
-                } else {
-                    System.out.println("You don't have any Get Out of Jail cards to use!");
-                }
-                currState.setState(State.States.ROLL);
-                break;
-            case JAIL_OUT_CASH:
-                // use cash
-                if (currentPlayer.getMoney() > 50) {
-                    currentPlayer.removeMoney(50);
-                    currentPlayer.leaveJail();
-                    System.out.println("You have left jail.");
-                } else {
-                    System.out.println("Insufficient funds to leave jail.");
+                } else if (answer == 2) {
+                    if (currentPlayer.getNumberGetOutOfJailCards() > 0) {
+                        // use the card
+                        if (currentPlayer.useGetOutOfJailCard() == Cards.CardType.CHANCE) {
+                            currState.getChance().returnOutOfJailCard();
+                        } else {
+                            currState.getCommunityChest().returnOutOfJailCard();
+                        }
+                        currentPlayer.leaveJail();
+                        System.out.println("You have left jail.");
+                    } else {
+                        System.out.println("You don't have any Get Out of Jail cards to use!");
+                    }
                 }
                 currState.setState(State.States.ROLL);
                 break;
@@ -469,18 +458,6 @@ public class Monopoly {
                 }
                 currState.setState(State.States.NONE);
                 break;
-            case BUYING_UNOWNED:
-                // player is buying the square
-                currentSquare = currState.getBoard().getSquare(currentPlayer.getPosition());
-                propertyCost = currentSquare.getCost();
-                currentPlayer.removeMoney(propertyCost);
-
-                currentPlayer.addProperty(currentSquare);
-                currentSquare.purchase(currentPlayer);
-
-                System.out.println(currentSquare.getName() + " has been purchased by " + currentPlayer.getName());
-                currState.setState(State.States.NONE);
-                break;
             case UNOWNED_LANDED:
                 currentSquare = currState.getBoard().getSquare(currentPlayer.getPosition());
                 propertyCost = currentSquare.getCost();
@@ -496,10 +473,17 @@ public class Monopoly {
                 currState.setActionList(Arrays.asList("Yes", "No"));
                 answer = currentPlayer.input(currState);
                 if (answer == 1) {
-                    currState.setState(State.States.BUYING_UNOWNED);
+                    // player is buying the square
+                    currentSquare = currState.getBoard().getSquare(currentPlayer.getPosition());
+                    propertyCost = currentSquare.getCost();
+                    currentPlayer.removeMoney(propertyCost);
+
+                    currentPlayer.addProperty(currentSquare);
+                    currentSquare.purchase(currentPlayer);
+
+                    System.out.println(currentSquare.getName() + " has been purchased by " + currentPlayer.getName());
                 } else if (answer == 2) {
                     currState.setState(State.States.NONE);
-                    //state.addDataSquares(currentSquare);
                 }
                 break;
             case OWNED_LANDED:
@@ -724,7 +708,7 @@ public class Monopoly {
         for (Square square: player.getProperties()) {
             if (skipProperties == 1 && square.isMortgaged()) continue;
             else if (skipProperties == 2 && !square.isMortgaged()) continue;
-            else if (skipProperties == 3 && (square instanceof Utilty || square instanceof Railroad)) continue;
+            else if (skipProperties == 3 && (square instanceof Utility || square instanceof Railroad)) continue;
             counter++;
             System.out.println(counter + ")  " + square.getName());
             chosenProperties.add(square);

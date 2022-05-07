@@ -26,6 +26,18 @@ public class HumanPlayer implements Player {
         chanceGetOutOfJailCardHeld = false;
     }
 
+    public HumanPlayer(HumanPlayer newPlayer) {
+        this.input = newPlayer.input;
+        this.money = newPlayer.money;
+        this.properties = new ArrayList<Square>(newPlayer.properties);
+        this.position = newPlayer.position;
+        this.playerName = newPlayer.playerName;
+        this.inJail = newPlayer.inJail;
+        this.jailTurn = newPlayer.jailTurn;
+        this.numberGetOutOfJailCards = newPlayer.getNumberGetOutOfJailCards();
+        this.chanceGetOutOfJailCardHeld = newPlayer.chanceGetOutOfJailCardHeld;
+    }
+
     public String getName() {
         return this.playerName;
     }

@@ -16,12 +16,13 @@ public class RandomPolicyPlayer implements Player {
     private int jailTurn;
     private int numberGetOutOfJailCards;
     private boolean chanceGetOutOfJailCardHeld;
+    private Random rand = new Random();
 
     public RandomPolicyPlayer(String name) {
         money = 1500;
         properties = new ArrayList<>();
         position = 0;
-        this.playerName = "Random Policy Agent " + name;
+        this.playerName = name;
         inJail = false;
         numberGetOutOfJailCards = 0;
         chanceGetOutOfJailCardHeld = false;
@@ -105,7 +106,6 @@ public class RandomPolicyPlayer implements Player {
         if (position >= boardSize) {
             position = position % boardSize;
             addMoney(200);
-            System.out.println("You've passed GO, collect £200!");
         }
         if (position < 0) {
             position += 40;
@@ -116,7 +116,6 @@ public class RandomPolicyPlayer implements Player {
         // check if pass GO on way
         if (pos < position) {
             addMoney(200);
-            System.out.println("You've passed GO, collect £200!");
         }
         position = pos;
     }
@@ -152,9 +151,9 @@ public class RandomPolicyPlayer implements Player {
 
 
     public int input(State state) {
-        Random rand = new Random();
-        int decision = rand.nextInt(state.getActionList().size()) + 1;
-        System.out.println(decision);
-        return decision;
+
+        int value = rand.nextInt(state.getActionList().size()) + 1;
+        //System.out.println(value);
+        return value;
     }
 }
