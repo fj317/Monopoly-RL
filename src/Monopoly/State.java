@@ -47,7 +47,11 @@ public class State {
         this.dataSquares = newState.dataSquares;
         this.currState = newState.currState;
         this.playerOne = new MonteCarloPlayer((MonteCarloPlayer) newState.playerOne);
-        this.playerTwo = new RandomPolicyPlayer((RandomPolicyPlayer) newState.playerTwo);
+        if (newState.playerTwo instanceof  RandomPolicyPlayer) {
+            this.playerTwo = new RandomPolicyPlayer((RandomPolicyPlayer) newState.playerTwo);
+        } else if (newState.playerTwo instanceof BallisPlayer) {
+            this.playerTwo = new BallisPlayer((BallisPlayer) newState.playerTwo);
+        }
         this.board = new Board(newState.board, this.playerOne, this.playerTwo);
         this.playerTurn = newState.playerTurn;
         this.doubles = newState.doubles;

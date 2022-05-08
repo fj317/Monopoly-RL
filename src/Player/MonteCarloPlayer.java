@@ -18,8 +18,6 @@ public class MonteCarloPlayer implements Player {
     private int jailTurn;
     private int numberGetOutOfJailCards;
     private boolean chanceGetOutOfJailCardHeld;
-    private boolean sim;
-    private int actionValue;
 
     public MonteCarloPlayer() {
         money = 1500;
@@ -29,7 +27,6 @@ public class MonteCarloPlayer implements Player {
         inJail = false;
         numberGetOutOfJailCards = 0;
         chanceGetOutOfJailCardHeld = false;
-        sim = false;
     }
 
     public MonteCarloPlayer(MonteCarloPlayer newPlayer) {
@@ -41,16 +38,6 @@ public class MonteCarloPlayer implements Player {
         this.jailTurn = newPlayer.jailTurn;
         this.numberGetOutOfJailCards = newPlayer.getNumberGetOutOfJailCards();
         this.chanceGetOutOfJailCardHeld = newPlayer.chanceGetOutOfJailCardHeld;
-        this.actionValue = newPlayer.actionValue;
-        this.sim = newPlayer.sim;
-    }
-
-    private void setActionValue(int actionValue) {
-        this.actionValue = actionValue;
-    }
-
-    private int getActionValue() {
-        return this.actionValue;
     }
 
     public String getName() {
@@ -169,7 +156,7 @@ public class MonteCarloPlayer implements Player {
     public int MCTSearch(State state) {
         // create root node with state
         Node newRoot = new Node(state, null, null, 0, 0, 0, false, 1);
-        int rollouts = 10000;
+        int rollouts = 50000;
         int rolls = 0;
         while (rolls < rollouts) {
             SelectedNode selectedNode = treePolicy(newRoot);

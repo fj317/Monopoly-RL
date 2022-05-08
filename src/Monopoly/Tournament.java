@@ -1,22 +1,20 @@
 package Monopoly;
 
-import Player.MonteCarloPlayer;
-import Player.Player;
-import Player.RandomPolicyPlayer;
+import Player.*;
 
 public class Tournament {
 
     // class for testing vs MCTS agent
 
-    private int MCTSWins;
-    private int opponentWins;
+    private int playerOneWins;
+    private int playerTwoWins;
     private int draws;
     private final int totalMatches;
 
 
     public Tournament(int totalMatches) {
-        this.MCTSWins = 0;
-        this.opponentWins = 0;
+        this.playerOneWins = 0;
+        this.playerTwoWins = 0;
         this.draws = 0;
         this.totalMatches = totalMatches;
     }
@@ -28,13 +26,13 @@ public class Tournament {
     private void getPlayers(State currState) {
         // add human or AI players etc
         // assume that playerOne is RL player
-        currState.setPlayerOne(new MonteCarloPlayer());
+        currState.setPlayerOne(new BallisPlayer("Max"));
         currState.setPlayerTwo(new RandomPolicyPlayer("Bob"));
     }
 
 
     public static void main(String[] args) {
-        Tournament tournament = new Tournament(500);
+        Tournament tournament = new Tournament(5000);
         System.out.println("Welcome to Monopoly! Starting the game...");
         for (int i = 0; i < tournament.getTotalMatches() ; i++) {
             System.out.println("GAME NO " + i);
@@ -50,16 +48,16 @@ public class Tournament {
             System.out.println("Winner was " + winner.getName());
             if (winner == null) {
                 tournament.draws++;
-            } else if (winner.getName().equals("RL")) {
-                tournament.MCTSWins++;
-            } else if (winner.getName().equals("Bob")) {
-                tournament.opponentWins++;
+            } else if (winner.getName().equals(currState.getPlayerOne().getName())) {
+                tournament.playerOneWins++;
+            } else if (winner.getName().equals(currState.getPlayerTwo().getName())) {
+                tournament.playerTwoWins++;
             }
         }
 
         System.out.println("---STATISTICS---");
-        System.out.println("MCTS WINS: " + tournament.MCTSWins);
-        System.out.println("OPPONENT WINS: " + tournament.opponentWins);
+        System.out.println("PlayerOne WINS: " + tournament.playerOneWins);
+        System.out.println("PlayerTwo WINS: " + tournament.playerTwoWins);
         System.out.println("DRAWS: " + tournament.draws);
     }
 }
