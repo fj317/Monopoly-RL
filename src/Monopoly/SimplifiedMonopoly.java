@@ -158,6 +158,8 @@ public class SimplifiedMonopoly {
                     } else if (currentSquare instanceof Jail && ((Jail) currentSquare).getType() == Jail.JailType.GOTO_JAIL) {
                         System.out.println("Go directly to jail.");
                         currentPlayer.sendToJail();
+                        // set doubles to false so player doesn't get another go
+                        state.setDoubles(false);
                     }
 
                     state.setState(State.States.END_TURN);
@@ -485,6 +487,8 @@ public class SimplifiedMonopoly {
                         // if jail
                     } else if (currentSquare instanceof Jail && ((Jail) currentSquare).getType() == Jail.JailType.GOTO_JAIL) {
                         currentPlayer.sendToJail();
+                        // set doubles to false so player doesn't get another go
+                        state.setDoubles(false);
                     }
 
                     state.setState(State.States.END_TURN);
