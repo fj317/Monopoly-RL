@@ -70,13 +70,12 @@ public class HumanPlayer implements Player {
 
     public void sendToJail() {
         inJail = true;
-        moveTo(10);
+        position = 10;
         jailTurn = 0;
     }
 
     public void leaveJail() {
         inJail = false;
-        moveTo(10);
     }
 
     public Boolean inJail() {
@@ -127,7 +126,7 @@ public class HumanPlayer implements Player {
 
     public void moveTo(int pos) {
         // check if pass GO on way
-        if (pos < position) {
+        if (pos < position && pos != 30) {
             addMoney(200);
         }
         position = pos;

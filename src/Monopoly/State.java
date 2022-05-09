@@ -3,6 +3,7 @@ package Monopoly;
 import Player.Player;
 import Player.*;
 
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,6 +52,8 @@ public class State {
             this.playerTwo = new RandomPolicyPlayer((RandomPolicyPlayer) newState.playerTwo);
         } else if (newState.playerTwo instanceof BallisPlayer) {
             this.playerTwo = new BallisPlayer((BallisPlayer) newState.playerTwo);
+        } else if (newState.playerTwo instanceof HumanPlayer) {
+            this.playerTwo = new HumanPlayer((HumanPlayer) newState.playerTwo);
         }
         this.board = new Board(newState.board, this.playerOne, this.playerTwo);
         this.playerTurn = newState.playerTurn;

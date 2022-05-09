@@ -5,7 +5,6 @@ import Tree.Node;
 import Tree.SelectedNode;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -58,13 +57,12 @@ public class MonteCarloPlayer implements Player {
 
     public void sendToJail() {
         inJail = true;
-        moveTo(10);
+        position = 10;
         jailTurn = 0;
     }
 
     public void leaveJail() {
         inJail = false;
-        moveTo(10);
     }
 
     public Boolean inJail() {
@@ -115,7 +113,7 @@ public class MonteCarloPlayer implements Player {
 
     public void moveTo(int pos) {
         // check if pass GO on way
-        if (pos < position) {
+        if (pos < position && pos != 30) {
             addMoney(200);
         }
         position = pos;
@@ -156,7 +154,7 @@ public class MonteCarloPlayer implements Player {
     public int MCTSearch(State state) {
         // create root node with state
         Node newRoot = new Node(state, null, null, 0, 0, 0, false, 1);
-        int rollouts = 50000;
+        int rollouts = 5000;
         int rolls = 0;
         while (rolls < rollouts) {
             SelectedNode selectedNode = treePolicy(newRoot);

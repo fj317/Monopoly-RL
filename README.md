@@ -5,7 +5,7 @@ A reinforced learning approach to creating an agent to play the board game Monop
 ## Roadmap
 - [x] Implement Monopoly game logic
 - [x] Implement player class
-- [ ] Implement reinforced learning AI player
+- [x] Implement reinforced learning AI player
  
 
 ## Acknowledgements

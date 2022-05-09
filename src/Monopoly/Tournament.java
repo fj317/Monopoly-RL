@@ -26,16 +26,17 @@ public class Tournament {
     private void getPlayers(State currState) {
         // add human or AI players etc
         // assume that playerOne is RL player
-        currState.setPlayerOne(new BallisPlayer("Max"));
+        currState.setPlayerOne(new MonteCarloPlayer());
         currState.setPlayerTwo(new RandomPolicyPlayer("Bob"));
     }
 
 
     public static void main(String[] args) {
-        Tournament tournament = new Tournament(5000);
+        Tournament tournament = new Tournament(20);
         System.out.println("Welcome to Monopoly! Starting the game...");
         for (int i = 0; i < tournament.getTotalMatches() ; i++) {
             System.out.println("GAME NO " + i);
+            long startTime = System.nanoTime();
             State currState = new State();
             tournament.getPlayers(currState);
             SimplifiedMonopoly.stepNoOutput(currState, 0);
@@ -44,6 +45,10 @@ public class Tournament {
                 inputAction = currState.getCurrentPlayer().input(currState);
                 SimplifiedMonopoly.stepNoOutput(currState, inputAction);
             }
+            long endTime = System.nanoTime();
+            long timeTaken = (endTime - startTime) / 1000000000;
+            System.out.println("Time taken: " + timeTaken);
+            System.out.println("TURN NUMBER: " + currState.getTickNumber());
             Player winner = currState.getWinner();
             System.out.println("Winner was " + winner.getName());
             if (winner == null) {

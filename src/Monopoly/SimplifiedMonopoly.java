@@ -2,11 +2,12 @@ package Monopoly;
 
 import Player.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class SimplifiedMonopoly {
 
-    public static final int maxTurns = 1000;
+    public static final int maxTurns = 250;
 
     public static void main(String[] args) {
         SimplifiedMonopoly monopoly = new SimplifiedMonopoly();
@@ -37,8 +38,8 @@ public class SimplifiedMonopoly {
     private void getPlayers(State currState) {
         // add human or AI players etc
         // assume that playerOne is RL player
-        currState.setPlayerOne(new BallisPlayer("Max"));
-        currState.setPlayerTwo(new RandomPolicyPlayer("Bob"));
+        currState.setPlayerOne(new MonteCarloPlayer());
+        currState.setPlayerTwo(new RandomPolicyPlayer("Bobby"));
     }
 
     public static boolean gameFinished(State state) {
@@ -51,7 +52,7 @@ public class SimplifiedMonopoly {
         int propertyCost;
         boolean actionRequired = false;
         while (!actionRequired) {
-            if (state.getTickNumber() > maxTurns) {
+            if (state.getTickNumber() >= maxTurns) {
                 state.setState(State.States.END_DRAW);
                 System.out.println("More than " + maxTurns + " turns completed. Ending game.");
                 break;
@@ -227,10 +228,16 @@ public class SimplifiedMonopoly {
                     }
                     System.out.println("END OF " + currentPlayer.getName() + "'S TURN");
                     System.out.println("Players money: " + currentPlayer.getMoney());
-                    System.out.println("Player's position: " + currentPlayer.getPosition());
+                    System.out.println("Player's position: " + state.getBoard().getSquare(currentPlayer.getPosition()).getName());
+                    System.out.print("Owned Properties: ");
+                    ArrayList<Square> properties = currentPlayer.getProperties();
+                    for (Square property: properties) {
+                        System.out.print(property.getName() + ", ");
+                    }
                     state.nextTurn();
                     state.addOneTick();
                     state.setState(State.States.TURN);
+                    System.out.println();
                     System.out.println();
                     break;
                 case JAIL_TURN:
@@ -287,7 +294,7 @@ public class SimplifiedMonopoly {
         Player currentPlayer = state.getCurrentPlayer();
         Square currentSquare = state.getBoard().getSquare(currentPlayer.getPosition());
         int taxCost = currentSquare.getCost();
-        System.out.println("You have landed on " + currentSquare.getName() + " and owe " + taxCost + " in tax.");
+        System.out.println("You have landed on " + currentSquare.getName() + " and owe £" + taxCost + " in tax.");
         if (currentPlayer.getMoney() < taxCost) {
             System.out.println("Insufficient funds to pay tax. " + currentPlayer.getName() + " has lost the game!");
             state.setState(State.States.END);
@@ -357,7 +364,7 @@ public class SimplifiedMonopoly {
             }
         }
         int cost = (totalHotels * hotelCost) + (totalHouses * houseCost);
-        System.out.println("You own £" + cost + " for street repairs.");
+        System.out.println("You owe £" + cost + " for street repairs.");
         if (currentPlayer.getMoney() < cost) {
             System.out.println("Insufficient funds to pay street repairs. " + currentPlayer.getName() + " has lost the game!");
             state.setState(State.States.END);
@@ -385,7 +392,7 @@ public class SimplifiedMonopoly {
         int propertyCost;
         boolean actionRequired = false;
         while (!actionRequired) {
-            if (state.getTickNumber() > maxTurns) {
+            if (state.getTickNumber() >= maxTurns) {
                 state.setState(State.States.END_DRAW);
                 break;
             }
