@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 public class SimplifiedMonopoly {
 
-    public static final int maxTurns = 250;
+    public static final int maxTurns = 1000;
 
     public static void main(String[] args) {
         SimplifiedMonopoly monopoly = new SimplifiedMonopoly();
@@ -39,7 +39,7 @@ public class SimplifiedMonopoly {
         // add human or AI players etc
         // assume that playerOne is RL player
         currState.setPlayerOne(new MonteCarloPlayer());
-        currState.setPlayerTwo(new RandomPolicyPlayer("Bobby"));
+        currState.setPlayerTwo(new BallisPlayer("Ballis"));
     }
 
     public static boolean gameFinished(State state) {

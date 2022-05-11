@@ -154,7 +154,7 @@ public class MonteCarloPlayer implements Player {
     public int MCTSearch(State state) {
         // create root node with state
         Node newRoot = new Node(state, null, null, 0, 0, 0, false, 1);
-        int rollouts = 5000;
+        int rollouts = 50000;
         int rolls = 0;
         while (rolls < rollouts) {
             SelectedNode selectedNode = treePolicy(newRoot);
