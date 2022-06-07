@@ -1,5 +1,5 @@
 # Monopoly-RL
-A reinforced learning approach to creating an agent to play the board game Monopoly. The agent uses a Monte Carlo tree search algorithm to decide upon what action to perform in each state. This was the code for my 2021/2022 Dissertation project for my final year at the University of Bath.
+A reinforced learning approach to creating an agent to play the board game Monopoly. The agent uses a Monte Carlo tree search algorithm to decide upon what action to perform in each state. This is the code for my 2021/2022 Dissertation project for my final year at the University of Bath.
 
 Due to implementation difficulties and time restrictions placed upon the project, a simplified Monopoly game was created for the MCTS agent. The SimplifiedMonopoly.java class contains the game logic for this simplified game, whilst Monopoly.java holds the full non-simplified game logic. 
 
