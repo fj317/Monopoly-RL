@@ -13,15 +13,15 @@ public class Property implements Square {
 
     private final int value; // cost to purchase property
     private final int houseCost; // cost to purchase one house on property
-    private final int pos;
+    private final int pos; // position on board
     private final String name;
     private int buildings;  // building status
     private boolean monopoly; // whether one player own all properties in set
     private boolean owned;  // is property owned
     private boolean mortgaged; // is property mortgaged
     private Player owner;
-    private Property groupPropertyA;
-    private Property groupPropertyB;
+    private Property groupPropertyA; // the second property in the group
+    private Property groupPropertyB; // the other property in the group (if there is a third)
 
 
     public Property(String name, int value, int pos, int rent, int houseCost, int oneHouse, int twoHouse, int threeHouse, int fourHouse, int hotel) {

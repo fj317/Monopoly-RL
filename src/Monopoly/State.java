@@ -25,6 +25,13 @@ public class State {
     private int playerTurn;
     private int tickNumber;
 
+    // list of all action-states possible in the game
+    public enum States {
+        UNOWNED_LANDED, UNOWNED_DECISION, OWNED_LANDED, BUYING_UNOWNED, BUY_HOUSE_PROPERTY_SELECT, BUY_HOUSE_ACTION, SELL_HOUSE_PROPERTY_SELECT, SELL_HOUSE_ACTION,
+        MORTGAGE_PROPERTY_SELECT, MORTGAGE_ACTION, UNMORTGAGE_PROPERTY_SELECT, UNMORTGAGE_ACTION, TRADE_PROPERTY_SELECT_1, TRADE_PROPERTY_SELECT_2,
+        TRADE_CONFIRM, NONE, END_TURN, JAIL_TURN, HOUSE_DECISION, MORTGAGE_DECISION, JAIL_DECISION, JAIL_OUT_CASH, JAIL_OUT_CARD, END, ROLL, TURN, SQUARE_ACTION, END_DRAW
+    }
+
     public State() {
         this.board = new Board();
         this.value = 0;
@@ -39,6 +46,8 @@ public class State {
         this.playerTurn = 1;
     }
 
+    // given a state create a new state with new but same-value objects
+    // needed for MCTS rollouts to occur without changing current game
     public State(State newState) {
         this.value = newState.value;
         this.dice = newState.dice;
@@ -62,8 +71,6 @@ public class State {
         this.tickNumber = newState.tickNumber;
         this.currState = newState.currState;
     }
-
-
 
     public Player getCurrentPlayer() {
         if (playerTurn == 1) {
@@ -179,7 +186,6 @@ public class State {
         this.dataSquares.clear();
     }
 
-
     public void setActionList(List<String> newActionList) {
         actionList = newActionList;
     }
@@ -215,14 +221,15 @@ public class State {
         if (currState == States.END) { // if END state then one player lost, return current player as logic ensures this player is the winner
             return getCurrentPlayer();
         } else if (currState == States.END_DRAW) { // if game ended in DRAW then need to total money and property cost of each player and compare
-            int playerOneValue = playerOne.getMoney();
+            int playerOneValue = playerOne.getMoney(); // get players money
             int playerTwoValue = playerTwo.getMoney();
-            for (Square property: playerOne.getProperties()) {
+            for (Square property: playerOne.getProperties()) { // for each player's property, all the cost of it to their value
                 playerOneValue += property.getCost();
             }
             for (Square property: playerTwo.getProperties()) {
                 playerTwoValue += property.getCost();
             }
+            // compare player values and return winner
             if (playerOneValue > playerTwoValue) {
                 return playerOne;
             } else if (playerTwoValue > playerOneValue) {
@@ -230,11 +237,5 @@ public class State {
             }
         }
         return null;
-    }
-
-    public enum States {
-        UNOWNED_LANDED, UNOWNED_DECISION, OWNED_LANDED, BUYING_UNOWNED, BUY_HOUSE_PROPERTY_SELECT, BUY_HOUSE_ACTION, SELL_HOUSE_PROPERTY_SELECT, SELL_HOUSE_ACTION,
-        MORTGAGE_PROPERTY_SELECT, MORTGAGE_ACTION, UNMORTGAGE_PROPERTY_SELECT, UNMORTGAGE_ACTION, TRADE, TRADE_PROPERTY_SELECT_1, TRADE_PROPERTY_SELECT_2,
-        TRADE_CONFIRM, NONE, END_TURN, JAIL_TURN, HOUSE_DECISION, MORTGAGE_DECISION, JAIL_DECISION, JAIL_OUT_CASH, JAIL_OUT_CARD, END, ROLL, TURN, SQUARE_ACTION, END_DRAW
     }
 }

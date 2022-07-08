@@ -6,6 +6,9 @@ import java.util.*;
 
 public class Monopoly {
 
+    // THIS IS UNFINISHED MONOPOLY - AGENTS DO NOT INTERACT CORRECTLY WITH THIS ENVIRONMENT, PLEASE USE SimplifiedMonopoly.
+    // REQUIRES REWRITING OF THE TICK FUNCTION TO WORK WITH THE MCTS AGENT
+
     public static void main(String[] args) {
         Monopoly monopoly = new Monopoly();
         monopoly.run();
@@ -714,17 +717,6 @@ public class Monopoly {
             chosenProperties.add(square);
         }
         return chosenProperties;
-    }
-
-    private MonteCarloState getMonteCarloState(){
-        // from board calculate properties
-
-        // get player position
-        // work out player finances
-        // state whether terminal state or not
-        // get action list for the state
-        // currentPlayer
-        return null;
     }
 
     private static void printState(State currState) {

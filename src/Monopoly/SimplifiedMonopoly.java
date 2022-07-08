@@ -39,7 +39,7 @@ public class SimplifiedMonopoly {
         // add human or AI players etc
         // assume that playerOne is RL player
         currState.setPlayerOne(new MonteCarloPlayer());
-        currState.setPlayerTwo(new BallisPlayer("Ballis"));
+        currState.setPlayerTwo(new HumanPlayer("Barry"));
     }
 
     public static boolean gameFinished(State state) {

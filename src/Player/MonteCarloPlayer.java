@@ -156,6 +156,7 @@ public class MonteCarloPlayer implements Player {
         Node newRoot = new Node(state, null, null, 0, 0, 0, false, 1);
         int rollouts = 50000;
         int rolls = 0;
+        System.out.println("Conducting rollouts...");
         while (rolls < rollouts) {
             SelectedNode selectedNode = treePolicy(newRoot);
             int reward = defaultPolicy(selectedNode.getSelectedNodeState());
@@ -175,7 +176,7 @@ public class MonteCarloPlayer implements Player {
                 return expand(node, currentState);
             } else {
                 // choose best node
-                node = bestChild(node, 0.8);
+                node = bestChild(node, 0.8); // 0.8 exploration value
                 // update state using action from node
                 SimplifiedMonopoly.stepNoOutput(currentState, node.getIncomingAction());
                 node.setPlayerTurn(currentState.getPlayerTurn());
@@ -191,7 +192,7 @@ public class MonteCarloPlayer implements Player {
         for (int i = 1; i <= currentNodeState.getActionList().size(); i++) {
             terminal = false;
             if (!node.checkNodeExists(i)) {
-                // play one tick with action to find terminal and player turn
+                // play one tick with action to find if terminal and player turn
                 State tempState = new State(currentNodeState);
                 SimplifiedMonopoly.stepNoOutput(tempState, i);
                 if (SimplifiedMonopoly.gameFinished(tempState)) {
@@ -210,6 +211,7 @@ public class MonteCarloPlayer implements Player {
         return new SelectedNode(chosenNode, currentNodeState);
     }
 
+    // chooses random action in each state until a terminal state is reached
     public int defaultPolicy(State state) {
         // while state isnt terminal
         while (!SimplifiedMonopoly.gameFinished(state)) {

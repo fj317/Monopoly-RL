@@ -13,9 +13,12 @@ public class Cards {
     private boolean outOfJailCardDrawn;
     private final CardType type;
 
-    private int getRandom() {
-        Random random = new Random();
-        return random.nextInt(16);
+    public enum CardAction {
+        BANK_MONEY, PLAYER_MONEY, MOVE, MOVE_TO, STREET_REPAIRS, OUT_JAIL;
+    }
+
+    public enum CardType {
+        CHANCE, COMMUNITY_CHEST;
     }
 
     public Cards(CardType type) {
@@ -44,6 +47,11 @@ public class Cards {
             default:
                 return null;
         }
+    }
+
+    private int getRandom() {
+        Random random = new Random();
+        return random.nextInt(16);
     }
 
     public CardType getType() {
@@ -265,11 +273,4 @@ public class Cards {
         return this.hotelCost;
     }
 
-    public enum CardAction {
-        BANK_MONEY, PLAYER_MONEY, MOVE, MOVE_TO, STREET_REPAIRS, OUT_JAIL;
-    }
-
-    public enum CardType {
-        CHANCE, COMMUNITY_CHEST;
-    }
 }
